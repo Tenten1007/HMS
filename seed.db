@@ -1,0 +1,72 @@
+-- ตารางห้องพัก
+CREATE TABLE rooms (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(50) NOT NULL
+);
+
+-- ตารางบิล
+CREATE TABLE bills (
+  id SERIAL PRIMARY KEY,
+  room_id INTEGER NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  month INTEGER NOT NULL, -- 1-12
+  year INTEGER NOT NULL,
+  room_rate NUMERIC(10,2) NOT NULL,
+  water_prev NUMERIC(10,2) NOT NULL,
+  water_curr NUMERIC(10,2) NOT NULL,
+  water_used NUMERIC(10,2) NOT NULL,
+  water_rate NUMERIC(10,2) NOT NULL,
+  electric_prev NUMERIC(10,2) NOT NULL,
+  electric_curr NUMERIC(10,2) NOT NULL,
+  electric_used NUMERIC(10,2) NOT NULL,
+  electric_rate NUMERIC(10,2) NOT NULL,
+  total NUMERIC(12,2) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'ยังไม่ชำระ', -- ยังไม่ชำระ | ชำระแล้ว | ชำระบางส่วน
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- ตารางการชำระเงิน
+CREATE TABLE payments (
+  id SERIAL PRIMARY KEY,
+  bill_id INTEGER NOT NULL REFERENCES bills(id) ON DELETE CASCADE,
+  amount NUMERIC(12,2) NOT NULL,
+  method VARCHAR(20) NOT NULL, -- เงินสด | โอน
+  slip_url TEXT,
+  note TEXT,
+  paid_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- ตารางลูกหอ/ผู้เช่า
+CREATE TABLE tenants (
+  id SERIAL PRIMARY KEY,
+  room_id INTEGER NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  phone VARCHAR(20),
+  start_date DATE NOT NULL,
+  end_date DATE,
+  note TEXT
+);
+
+-- ข้อมูลตัวอย่างห้องพัก
+INSERT INTO rooms (name) VALUES
+  ('ห้อง 101'),
+  ('ห้อง 102'),
+  ('ห้อง 201'),
+  ('ห้อง 202');
+
+-- ข้อมูลตัวอย่างบิล
+INSERT INTO bills (room_id, month, year, room_rate, water_prev, water_curr, water_used, water_rate, electric_prev, electric_curr, electric_used, electric_rate, total, status, created_at, updated_at) VALUES
+  (1, 7, 2025, 3500, 100, 110, 10, 18, 500, 520, 20, 7, 3500+10*18+20*7, 'ยังไม่ชำระ', NOW(), NOW()),
+  (2, 7, 2025, 3500, 200, 210, 10, 18, 600, 620, 20, 7, 3500+10*18+20*7, 'ชำระแล้ว', NOW(), NOW()),
+  (3, 7, 2025, 5000, 150, 155, 5, 18, 700, 710, 10, 7, 5000+5*18+10*7, 'ชำระบางส่วน', NOW(), NOW());
+
+-- ข้อมูลตัวอย่างการชำระเงิน
+INSERT INTO payments (bill_id, amount, method, slip_url, note, paid_at, created_at) VALUES
+  (2, 4000, 'โอน', 'https://example.com/slip1.png', 'โอนเต็มจำนวน', NOW(), NOW()),
+  (3, 2000, 'เงินสด', NULL, 'จ่ายบางส่วน', NOW(), NOW());
+
+-- ข้อมูลตัวอย่างลูกหอ/ผู้เช่า
+INSERT INTO tenants (room_id, name, phone, start_date, end_date, note) VALUES
+  (2, 'สมชาย ใจดี', '081-234-5678', '2024-01-01', NULL, 'จ่ายตรงเวลา'),
+  (4, 'อรทัย สายใจ', '089-999-8888', '2024-05-01', NULL, '');
