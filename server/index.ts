@@ -9,6 +9,7 @@ import roomsRouter from "./routes/rooms.js";
 import billsRouter from "./routes/bills.js";
 import paymentsRouter from "./routes/payments.js";
 import tenantsRouter from "./routes/tenants.js";
+import lineRouter from "./routes/line.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,7 @@ app.use("/api/rooms", roomsRouter);
 app.use("/api/bills", billsRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/tenants", tenantsRouter);
+app.use("/api", lineRouter);
 
 // Endpoint: POST /api/generate-bill
 // body: { ...billData, format: "pdf" | "png" }

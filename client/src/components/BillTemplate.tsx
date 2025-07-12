@@ -44,7 +44,7 @@ const BillTemplate: React.FC<BillTemplateProps> = ({
   }
   console.log("promptpayNumber", promptpayNumber, "qrPayload", qrPayload);
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto my-4 font-sans text-slate-800 border border-slate-200 max-h-[90vh] overflow-y-auto">
+    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto my-4 font-sans text-slate-800 border border-slate-200 max-h-[100vh] overflow-y-auto mt-[150px]">
       <div className="text-center mb-4">
         <div className="text-xl font-bold">ใบแจ้งหนี้ค่าห้องพัก</div>
         <div className="text-sm text-slate-500">(ตัวอย่างบิล)</div>

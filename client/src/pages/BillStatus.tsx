@@ -254,6 +254,27 @@ const BillStatus: React.FC = () => {
     bill => `${Number(bill.month)}/${bill.year}` === selectedMonthYear
   );
 
+  // เพิ่มฟังก์ชันสำหรับส่งบิลเข้าไลน์กลุ่ม
+  const handleSendBillsToLine = async () => {
+    if (!window.confirm("ยืนยันส่งบิลเข้าไลน์กลุ่มสำหรับเดือน/ปีนี้?")) return;
+    try {
+      const [month, year] = selectedMonthYear.split("/");
+      const res = await fetch("http://localhost:4000/api/send-bills-to-line", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ month, year })
+      });
+      if (res.ok) {
+        alert("ส่งบิลเข้าไลน์กลุ่มสำเร็จ!");
+      } else {
+        const data = await res.json();
+        alert("เกิดข้อผิดพลาด: " + (data.error || "ไม่สามารถส่งบิลได้"));
+      }
+    } catch (e: any) {
+      alert("เกิดข้อผิดพลาด: " + e.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -307,6 +328,12 @@ const BillStatus: React.FC = () => {
             </optgroup>
           ))}
         </select>
+        <button
+          onClick={handleSendBillsToLine}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow text-base font-semibold"
+        >
+          ส่งบิลเข้าไลน์กลุ่ม
+        </button>
       </div>
 
       <div className="overflow-x-auto rounded-xl shadow-inner">
