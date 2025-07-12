@@ -20,10 +20,15 @@ CREATE TABLE bills (
   electric_used NUMERIC(10,2) NOT NULL,
   electric_rate NUMERIC(10,2) NOT NULL,
   total NUMERIC(12,2) NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'ยังไม่ชำระ', -- ยังไม่ชำระ | ชำระแล้ว | ชำระบางส่วน
+  status VARCHAR(20) NOT NULL DEFAULT 'unpaid' CHECK (status IN ('unpaid', 'paid', 'partial')),
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- สร้าง index เพื่อเพิ่มประสิทธิภาพการค้นหา
+CREATE INDEX IF NOT EXISTS idx_bills_room_id ON bills(room_id);
+CREATE INDEX IF NOT EXISTS idx_bills_status ON bills(status);
+CREATE INDEX IF NOT EXISTS idx_bills_month_year ON bills(month, year);
 
 -- ตารางการชำระเงิน
 CREATE TABLE payments (
@@ -57,9 +62,9 @@ INSERT INTO rooms (name) VALUES
 
 -- ข้อมูลตัวอย่างบิล
 INSERT INTO bills (room_id, month, year, room_rate, water_prev, water_curr, water_used, water_rate, electric_prev, electric_curr, electric_used, electric_rate, total, status, created_at, updated_at) VALUES
-  (1, 7, 2025, 3500, 100, 110, 10, 18, 500, 520, 20, 7, 3500+10*18+20*7, 'ยังไม่ชำระ', NOW(), NOW()),
-  (2, 7, 2025, 3500, 200, 210, 10, 18, 600, 620, 20, 7, 3500+10*18+20*7, 'ชำระแล้ว', NOW(), NOW()),
-  (3, 7, 2025, 5000, 150, 155, 5, 18, 700, 710, 10, 7, 5000+5*18+10*7, 'ชำระบางส่วน', NOW(), NOW());
+  (1, 7, 2025, 3500, 100, 110, 10, 18, 500, 520, 20, 7, 3500+10*18+20*7, 'unpaid', NOW(), NOW()),
+  (2, 7, 2025, 3500, 200, 210, 10, 18, 600, 620, 20, 7, 3500+10*18+20*7, 'paid', NOW(), NOW()),
+  (3, 7, 2025, 5000, 150, 155, 5, 18, 700, 710, 10, 7, 5000+5*18+10*7, 'partial', NOW(), NOW());
 
 -- ข้อมูลตัวอย่างการชำระเงิน
 INSERT INTO payments (bill_id, amount, method, slip_url, note, paid_at, created_at) VALUES

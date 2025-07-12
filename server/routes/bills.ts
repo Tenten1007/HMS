@@ -7,7 +7,12 @@ const router = express.Router();
 // GET /api/bills
 router.get("/", async (req, res) => {
   try {
-    const result = await query("SELECT * FROM bills ORDER BY id DESC");
+    const result = await query(`
+      SELECT b.*, r.name as room_name 
+      FROM bills b 
+      LEFT JOIN rooms r ON b.room_id = r.id 
+      ORDER BY b.id DESC
+    `);
     res.json(result.rows.map(toBill));
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch bills" });
