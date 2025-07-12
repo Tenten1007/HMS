@@ -2,11 +2,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Building2, Users, Banknote, Zap, Droplets } from 'lucide-react';
 import { useRoomData } from '../hooks/useRoomData';
+import React, { useEffect, useState } from 'react';
 
 const Dashboard = () => {
-  const { rooms, getTotalRevenue, getOccupiedRooms } = useRoomData();
-  
-  const totalRevenue = getTotalRevenue();
+  const { rooms, getOccupiedRooms } = useRoomData();
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [bills, setBills] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('http://localhost:4000/api/bills')
+      .then(res => res.json())
+      .then(data => {
+        setBills(data);
+        // รวมเฉพาะบิลที่จ่ายแล้ว
+        const paidTotal = data
+          .filter((b: any) => b.status === 'paid')
+          .reduce((sum: number, b: any) => sum + (Number(b.total) || 0), 0);
+        setTotalRevenue(paidTotal);
+      });
+  }, []);
+
   const occupiedRooms = getOccupiedRooms();
   const occupancyRate = (occupiedRooms / rooms.length) * 100;
 
@@ -34,18 +49,6 @@ const Dashboard = () => {
             <p className="text-xs text-green-100">ห้องที่มีผู้เช่า {occupancyRate.toFixed(1)}%</p>
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">รายได้รวม</CardTitle>
-            <Banknote className="h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">฿{totalRevenue.toLocaleString()}</div>
-            <p className="text-xs text-purple-100">เดือนนี้</p>
-          </CardContent>
-        </Card>
-
         <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">ห้องว่าง</CardTitle>
@@ -56,6 +59,18 @@ const Dashboard = () => {
             <p className="text-xs text-orange-100">พร้อมให้เช่า</p>
           </CardContent>
         </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">รายได้รวม</CardTitle>
+            <Banknote className="h-4 w-4" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">฿{totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-purple-100">เดือนนี้ (เฉพาะบิลที่จ่ายแล้ว)</p>
+          </CardContent>
+        </Card>
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
