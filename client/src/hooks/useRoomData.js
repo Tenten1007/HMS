@@ -3,27 +3,58 @@ import { useState, useEffect } from 'react';
 
 export const useRoomData = () => {
   const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:4000/api/rooms')
-      .then(res => res.json())
-      .then(data => {
-        // แปลงข้อมูล backend (ภาษาไทย) ให้เหมาะกับ UI เดิม
-        const mapped = data.map(room => ({
+    const fetchData = async () => {
+      setLoading(true);
+      // ดึงข้อมูลห้องและบิลทั้งหมด
+      const [roomsRes, billsRes] = await Promise.all([
+        fetch('http://localhost:4000/api/rooms').then(res => res.json()),
+        fetch('http://localhost:4000/api/bills').then(res => res.json())
+      ]);
+      // หา bill ล่าสุดของแต่ละห้อง (ตาม year, month มากสุด)
+      const latestBillByRoom = {};
+      billsRes.forEach(bill => {
+        if (!latestBillByRoom[bill.roomId]) {
+          latestBillByRoom[bill.roomId] = bill;
+        } else {
+          const prev = latestBillByRoom[bill.roomId];
+          if (
+            bill.year > prev.year ||
+            (bill.year === prev.year && bill.month > prev.month)
+          ) {
+            latestBillByRoom[bill.roomId] = bill;
+          }
+        }
+      });
+      // map rooms + เติมข้อมูลจาก bill ล่าสุด
+      const mapped = roomsRes.map(room => {
+        const bill = latestBillByRoom[room.id];
+        // หาผู้เช่าปัจจุบัน (ถ้ามี)
+        let tenant = '';
+        if (room.tenants && room.tenants.length > 0) {
+          tenant = room.tenants[0].name;
+        }
+        return {
           id: room.id,
           number: room.ชื่อ,
-          rent: 0, // ปรับตามข้อมูลจริงถ้ามี
-          tenant: room.สถานะ === 'มีผู้เช่า' ? 'มีผู้เช่า' : '',
-          phone: '',
-          deposit: 0,
-          electricUnits: 0,
-          waterUnits: 0,
-          electricCost: 0,
-          waterCost: 0,
-          totalUtilityCost: 0
-        }));
-        setRooms(mapped);
+          rent: bill ? bill.roomRate : 0,
+          tenant,
+          phone: room.tenants && room.tenants[0] ? room.tenants[0].phone : '',
+          deposit: 0, // ไม่มีใน schema
+          electricUnits: bill ? bill.electricUsed : 0,
+          waterUnits: bill ? bill.waterUsed : 0,
+          electricCost: bill ? bill.electricUsed * bill.electricRate : 0,
+          waterCost: bill ? bill.waterUsed * bill.waterRate : 0,
+          totalUtilityCost: bill ? (bill.electricUsed * bill.electricRate + bill.waterUsed * bill.waterRate) : 0,
+          status: room.สถานะ,
+        };
       });
+      setRooms(mapped);
+      setLoading(false);
+    };
+    fetchData();
   }, []);
 
   const updateRoom = (roomId, updates) => {
@@ -51,6 +82,7 @@ export const useRoomData = () => {
     rooms,
     updateRoom,
     getTotalRevenue,
-    getOccupiedRooms
+    getOccupiedRooms,
+    loading
   };
 };

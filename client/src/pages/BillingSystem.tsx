@@ -33,6 +33,7 @@ const BillingSystem: React.FC = () => {
   const electricRate = getRate("electricRate", 10);
   const [preview, setPreview] = useState(false);
   const [roomOptions, setRoomOptions] = useState<{value: string, label: string, id: number}[]>([]);
+  const [allBills, setAllBills] = useState<any[]>([]);
 
   useEffect(() => {
     fetch("http://localhost:4000/api/rooms")
@@ -40,7 +41,29 @@ const BillingSystem: React.FC = () => {
       .then(data => {
         setRoomOptions(data.map(room => ({ value: room.ชื่อ, label: room.ชื่อ, id: room.id })));
       });
+    // ดึงบิลทั้งหมดมาเก็บไว้
+    fetch("http://localhost:4000/api/bills")
+      .then(res => res.json())
+      .then(data => setAllBills(data));
   }, []);
+
+  // เติมเลขมิเตอร์เดือนที่แล้วอัตโนมัติเมื่อเปลี่ยนห้องหรือวันที่
+  useEffect(() => {
+    const selectedRoom = roomOptions.find(room => room.value === form.roomName);
+    if (!selectedRoom) return;
+    const billDate = new Date(form.billDate);
+    const month = billDate.getMonth() + 1;
+    const year = billDate.getFullYear();
+    const prevBill = allBills
+      .filter(b => b.roomId === selectedRoom.id && (b.year < year || (b.year === year && b.month < month)))
+      .sort((a, b) => b.year - a.year || b.month - a.month)[0];
+    setForm(prev => ({
+      ...prev,
+      waterPrev: prevBill ? prevBill.waterCurr : 0,
+      electricPrev: prevBill ? prevBill.electricCurr : 0,
+    }));
+    // eslint-disable-next-line
+  }, [form.roomName, form.billDate, allBills]);
 
   const handleChange = (field: keyof BillForm, value: string | number) => {
     // ไม่ให้แก้ไข roomRate ในฟอร์ม

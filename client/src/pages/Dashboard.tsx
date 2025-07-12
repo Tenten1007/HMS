@@ -2,28 +2,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Building2, Users, Banknote, Zap, Droplets } from 'lucide-react';
 import { useRoomData } from '../hooks/useRoomData';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 const Dashboard = () => {
-  const { rooms, getOccupiedRooms } = useRoomData();
-  const [totalRevenue, setTotalRevenue] = useState(0);
-  const [bills, setBills] = useState<any[]>([]);
+  const { rooms, getOccupiedRooms, loading } = useRoomData();
 
-  useEffect(() => {
-    fetch('http://localhost:4000/api/bills')
-      .then(res => res.json())
-      .then(data => {
-        setBills(data);
-        // รวมเฉพาะบิลที่จ่ายแล้ว
-        const paidTotal = data
-          .filter((b: any) => b.status === 'paid')
-          .reduce((sum: number, b: any) => sum + (Number(b.total) || 0), 0);
-        setTotalRevenue(paidTotal);
-      });
-  }, []);
+  // รายได้รวม (เฉพาะห้องที่มีผู้เช่าและมีบิลล่าสุด)
+  const totalRevenue = rooms
+    .filter(room => room.tenant)
+    .reduce((sum, room) => sum + (room.rent || 0), 0);
 
   const occupiedRooms = getOccupiedRooms();
-  const occupancyRate = (occupiedRooms / rooms.length) * 100;
+  const occupancyRate = rooms.length > 0 ? (occupiedRooms / rooms.length) * 100 : 0;
+
+  if (loading) {
+    return <div className="p-8 text-center text-gray-500">กำลังโหลดข้อมูล...</div>;
+  }
 
   return (
     <div className="space-y-6 pl-6 pr-6">
@@ -91,7 +85,7 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <p className="font-medium">{room.tenant || 'ห้องว่าง'}</p>
-                      <p className="text-sm text-gray-500">฿{room.rent.toLocaleString()}/เดือน</p>
+                      <p className="text-sm text-gray-500">฿{room.rent ? room.rent.toLocaleString() : 0}/เดือน</p>
                     </div>
                   </div>
                   <Badge variant={room.tenant ? "default" : "secondary"}>
@@ -133,7 +127,7 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">฿{(room.electricUnits * 6 + room.waterUnits * 25).toLocaleString()}</p>
+                    <p className="font-semibold">฿{room.totalUtilityCost.toLocaleString()}</p>
                     <p className="text-sm text-gray-500">ค่าน้ำค่าไฟ</p>
                   </div>
                 </div>
