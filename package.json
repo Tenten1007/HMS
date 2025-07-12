@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "nodemon --watch ./server --ext ts --exec \"./node_modules/.bin/tsx server/index.ts\""
+    "dev:server": "nodemon --watch ./server --ext ts --exec \"./node_modules/.bin/tsx server/index.ts\"",
+    "dev": "concurrently \"npm run dev:server\" \"cd client && npm run dev\"",
+    "install:all": "npm install && cd client && npm install --legacy-peer-deps",
+    "build": "cd client && npm run build"
   },
   "dependencies": {
     "@types/pg": "^8.15.4",
@@ -26,6 +29,7 @@
     "@types/express": "^5.0.3",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.0.13",
+    "concurrently": "^8.2.2",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
