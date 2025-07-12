@@ -19,6 +19,19 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   const templatePath = path.join(__dirname, "templates", "bill.html");
   let html = fs.readFileSync(templatePath, "utf8");
 
+  // สร้าง QR Code PromptPay (ใช้ require แบบ dynamic)
+  const promptpayNumber = process.env.PROMPTPAY_NUMBER || "0800000000";
+  const amount = bill.total;
+  let qrBase64 = "";
+  try {
+    const promptpay = require('promptpay-qr');
+    const QRCode = require('qrcode');
+    const payload = promptpay.generate(promptpayNumber, { amount });
+    qrBase64 = await QRCode.toDataURL(payload, { margin: 1, width: 160 });
+  } catch (e) {
+    qrBase64 = "";
+  }
+
   // Simple replace (ควรใช้ template engine จริงจัง)
   html = html.replace(/{{roomName}}/g, String(bill.roomName))
     .replace(/{{roomRate}}/g, formatMoney(bill.roomRate))
@@ -32,7 +45,8 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     .replace(/{{electricUsed}}/g, String(bill.electricUsed))
     .replace(/{{electricRate}}/g, String(bill.electricRate))
     .replace(/{{electricCost}}/g, formatMoney(electricCost))
-    .replace(/{{total}}/g, formatMoney(bill.total));
+    .replace(/{{total}}/g, formatMoney(bill.total))
+    .replace(/{{promptpay_qr}}/g, qrBase64 ? `<img src='${qrBase64}' alt='PromptPay QR' style='display:block;margin:12px auto 0;width:160px;height:160px;'>` : "");
 
   const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();

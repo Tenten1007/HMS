@@ -262,6 +262,9 @@ const BillStatus: React.FC = () => {
     );
   }
 
+  // เพิ่มอ่านเบอร์พร้อมเพย์จาก env
+  const PROMPTPAY_NUMBER = import.meta.env.VITE_PROMPTPAY_NUMBER || "0800000000";
+
   return (
     <div className="max-w-4xl mx-auto mt-8 bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/40">
       {/* Overlay แจ้งเตือนการหมุนจอ */}
@@ -497,6 +500,7 @@ const BillStatus: React.FC = () => {
                 electricRate={previewBill.electricRate}
                 total={previewBill.total}
                 billDate={`${previewBill.year}-${String(previewBill.month).padStart(2, '0')}-01`}
+                promptpayNumber={PROMPTPAY_NUMBER}
               />
             </div>
             <div className="flex flex-wrap gap-2 mt-4 justify-end w-full max-w-xs mx-auto py-2">

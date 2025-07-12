@@ -1,4 +1,6 @@
 import React from "react";
+import QRCode from "react-qr-code";
+import { generatePromptPayPayload } from "../lib/promptpay";
 
 interface BillTemplateProps {
   roomName: string;
@@ -13,6 +15,7 @@ interface BillTemplateProps {
   electricRate: number;
   total: number;
   billDate?: string; // เพิ่ม prop วันที่
+  promptpayNumber?: string; // เพิ่ม prop เบอร์พร้อมเพย์ (optional)
 }
 
 const BillTemplate: React.FC<BillTemplateProps> = ({
@@ -28,7 +31,18 @@ const BillTemplate: React.FC<BillTemplateProps> = ({
   electricRate,
   total,
   billDate, // destructure billDate
+  promptpayNumber,
 }) => {
+  // สร้าง payload พร้อมเพย์ (ถ้ามีเบอร์)
+  let qrPayload = "";
+  if (promptpayNumber) {
+    try {
+      qrPayload = generatePromptPayPayload(promptpayNumber, total);
+    } catch (e) {
+      qrPayload = "";
+    }
+  }
+  console.log("promptpayNumber", promptpayNumber, "qrPayload", qrPayload);
   return (
     <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto my-4 font-sans text-slate-800 border border-slate-200 max-h-[90vh] overflow-y-auto">
       <div className="text-center mb-4">
@@ -55,6 +69,13 @@ const BillTemplate: React.FC<BillTemplateProps> = ({
         <span className="font-bold text-lg">รวมทั้งสิ้น</span>
         <span className="text-2xl font-bold text-green-600">{total.toLocaleString()} บาท</span>
       </div>
+      {qrPayload && (
+        <div className="flex flex-col items-center mt-4">
+          {/* @ts-ignore */}
+          <QRCode value={qrPayload} size={160} />
+          <div className="text-xs text-slate-500 mt-2">สแกนจ่ายผ่าน PromptPay</div>
+        </div>
+      )}
       <div className="text-xs text-slate-400 mt-6 text-center">* กรุณาชำระเงินภายในวันที่ 5 ของเดือนถัดไป</div>
     </div>
   );

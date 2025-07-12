@@ -149,6 +149,9 @@ const BillingSystem: React.FC = () => {
   const electricCost = electricUsed * electricRate;
   const total = waterCost + electricCost + form.roomRate;
 
+  // เพิ่มอ่านเบอร์พร้อมเพย์จาก env
+  const PROMPTPAY_NUMBER = import.meta.env.VITE_PROMPTPAY_NUMBER || "0800000000";
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
       <h2 className="text-2xl font-bold mb-6 text-slate-800 drop-shadow">ระบบคิดค่าน้ำค่าไฟ</h2>
@@ -268,6 +271,7 @@ const BillingSystem: React.FC = () => {
                 electricRate={electricRate}
                 total={total}
                 billDate={form.billDate}
+                promptpayNumber={PROMPTPAY_NUMBER}
               />
             </div>
             <div className="flex flex-wrap gap-2 mt-4 justify-end w-full max-w-xs mx-auto py-2">
