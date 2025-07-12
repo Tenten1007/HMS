@@ -39,6 +39,21 @@ const toDateInputValue = (dateStr) => {
   return d.toISOString().slice(0, 10);
 };
 
+// ฟังก์ชันจัดรูปแบบเบอร์โทรให้เป็น 0x-xxx-xxxx หรือ 08x-xxx-xxxx
+function formatPhoneNumber(phone) {
+  if (!phone) return "";
+  // ลบ non-digit
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) {
+    // 08x-xxx-xxxx
+    return digits.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+  } else if (digits.length === 9) {
+    // 0x-xxx-xxxx
+    return digits.replace(/(\d{2})(\d{3})(\d{4})/, "$1-$2-$3");
+  }
+  return phone; // ถ้าไม่ตรง format
+}
+
 const RoomManagement: React.FC = () => {
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -257,7 +272,7 @@ const RoomManagement: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold">📞</span>
-                        <span>{tenant.phone}</span>
+                        <span>{formatPhoneNumber(tenant.phone)}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold">🗓️ เข้าอยู่:</span>
@@ -304,7 +319,7 @@ const RoomManagement: React.FC = () => {
                 {selectedRoom.tenants.map((tenant, idx) => (
                   <div key={tenant.id || idx} className="border-b last:border-b-0 border-blue-100 pb-2 last:pb-0">
                     <div><span className="font-semibold">ชื่อผู้เข้าพัก: </span>{tenant.name}</div>
-                    <div><span className="font-semibold">เบอร์โทร: </span>{tenant.phone}</div>
+                    <div><span className="font-semibold">เบอร์โทร: </span>{formatPhoneNumber(tenant.phone)}</div>
                     <div><span className="font-semibold">วันเข้าอยู่: </span>{formatThaiDate(tenant.startDate)}</div>
                     {tenant.endDate && <div><span className="font-semibold">วันสิ้นสุดสัญญา: </span>{formatThaiDate(tenant.endDate)}</div>}
                     {tenant.note && <div><span className="font-semibold">หมายเหตุ: </span>{tenant.note}</div>}
