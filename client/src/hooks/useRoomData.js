@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 
 export const useRoomData = () => {
   const [rooms, setRooms] = useState([]);
+  const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,6 +14,7 @@ export const useRoomData = () => {
         fetch('http://localhost:4000/api/rooms').then(res => res.json()),
         fetch('http://localhost:4000/api/bills').then(res => res.json())
       ]);
+      setBills(billsRes);
       // หา bill ล่าสุดของแต่ละห้อง (ตาม year, month มากสุด)
       const latestBillByRoom = {};
       billsRes.forEach(bill => {
@@ -66,12 +68,8 @@ export const useRoomData = () => {
   };
 
   const getTotalRevenue = () => {
-    return rooms.reduce((total, room) => {
-      if (room.tenant) {
-        return total + room.rent + (room.totalUtilityCost || 0);
-      }
-      return total;
-    }, 0);
+    // Deprecated: Dashboard จะใช้ bills ตรง ๆ แทน
+    return 0;
   };
 
   const getOccupiedRooms = () => {
@@ -80,6 +78,7 @@ export const useRoomData = () => {
 
   return {
     rooms,
+    bills,
     updateRoom,
     getTotalRevenue,
     getOccupiedRooms,

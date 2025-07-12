@@ -5,12 +5,12 @@ import { useRoomData } from '../hooks/useRoomData';
 import React from 'react';
 
 const Dashboard = () => {
-  const { rooms, getOccupiedRooms, loading } = useRoomData();
+  const { rooms, bills, getOccupiedRooms, loading } = useRoomData();
 
-  // รายได้รวม (เฉพาะห้องที่มีผู้เช่าและมีบิลล่าสุด)
-  const totalRevenue = rooms
-    .filter(room => room.tenant)
-    .reduce((sum, room) => sum + (room.rent || 0), 0);
+  // รายได้รวม (เฉพาะบิลที่จ่ายแล้ว)
+  const totalRevenue = bills
+    .filter(bill => bill.status === 'paid')
+    .reduce((sum, bill) => sum + (bill.total || 0), 0);
 
   const occupiedRooms = getOccupiedRooms();
   const occupancyRate = rooms.length > 0 ? (occupiedRooms / rooms.length) * 100 : 0;
