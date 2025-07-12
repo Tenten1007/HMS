@@ -9,7 +9,6 @@ import RoomManagement from "./pages/RoomManagement";
 import BillingSystem from "./pages/BillingSystem";
 import BillStatus from "./pages/BillStatus";
 import Settings from "./pages/Settings";
-import PaymentStatus from "./pages/PaymentStatus";
 import "./styles/glass.css";
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
@@ -30,7 +29,6 @@ const App = () => (
             <Route path="/billing" element={<BillingSystem />} />
             <Route path="/bill-status" element={<BillStatus />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/payment-status" element={<PaymentStatus />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

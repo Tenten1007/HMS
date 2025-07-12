@@ -10,7 +10,6 @@ const Navbar = () => {
     { path: "/rooms", label: "จัดการห้องพัก" },
     { path: "/billing", label: "คิดค่าน้ำค่าไฟ" },
     { path: "/bill-status", label: "สถานะการจ่ายเงิน" },
-    { path: "/payment-status", label: "สถานะชำระเงิน" },
     { path: "/settings", label: "ตั้งค่าหน่วยน้ำ-ไฟ" },
   ];
   const [open, setOpen] = useState(false);

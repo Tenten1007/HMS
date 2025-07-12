@@ -37,12 +37,53 @@ router.post("/", async (req, res) => {
 // PUT /api/bills/:id
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, month, year, waterPrev, waterCurr, electricPrev, electricCurr } = req.body;
+  
   try {
-    const result = await query(
-      "UPDATE bills SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *",
-      [status, id]
-    );
+    let queryText = "UPDATE bills SET updated_at=NOW()";
+    let params = [];
+    let paramIndex = 1;
+
+    if (status !== undefined) {
+      queryText += `, status=$${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+    if (month !== undefined) {
+      queryText += `, month=$${paramIndex}`;
+      params.push(month);
+      paramIndex++;
+    }
+    if (year !== undefined) {
+      queryText += `, year=$${paramIndex}`;
+      params.push(year);
+      paramIndex++;
+    }
+    if (waterPrev !== undefined) {
+      queryText += `, water_prev=$${paramIndex}`;
+      params.push(waterPrev);
+      paramIndex++;
+    }
+    if (waterCurr !== undefined) {
+      queryText += `, water_curr=$${paramIndex}`;
+      params.push(waterCurr);
+      paramIndex++;
+    }
+    if (electricPrev !== undefined) {
+      queryText += `, electric_prev=$${paramIndex}`;
+      params.push(electricPrev);
+      paramIndex++;
+    }
+    if (electricCurr !== undefined) {
+      queryText += `, electric_curr=$${paramIndex}`;
+      params.push(electricCurr);
+      paramIndex++;
+    }
+
+    queryText += ` WHERE id=$${paramIndex} RETURNING *`;
+    params.push(id);
+
+    const result = await query(queryText, params);
     if (result.rows.length === 0) return res.status(404).json({ error: "Bill not found" });
     res.json(toBill(result.rows[0]));
   } catch (err) {

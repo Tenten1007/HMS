@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import GlassCard from "../components/GlassCard";
+import { FaCheckCircle, FaClock, FaMoneyCheckAlt, FaPaperclip, FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import BillTemplate from "../components/BillTemplate";
 
 interface Bill {
   id: number;
@@ -32,6 +33,12 @@ const BillStatus: React.FC = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMonthYear, setSelectedMonthYear] = useState("");
+  const [monthYearList, setMonthYearList] = useState<string[]>([]);
+  const [editingBill, setEditingBill] = useState<Bill | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [previewBill, setPreviewBill] = useState<Bill | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     fetchBills();
@@ -43,6 +50,11 @@ const BillStatus: React.FC = () => {
       const res = await fetch("http://localhost:4000/api/bills");
       const data = await res.json();
       setBills(data);
+      
+      // สร้าง monthYearList
+      const months = Array.from(new Set(data.map((b: Bill) => `${b.month}/${b.year}`))) as string[];
+      setMonthYearList(months);
+      setSelectedMonthYear(months[0] || "");
     } catch (error) {
       console.error("Error fetching bills:", error);
     }
@@ -78,12 +90,121 @@ const BillStatus: React.FC = () => {
     }
   };
 
+  const deleteBill = async (billId: number) => {
+    if (!confirm("คุณแน่ใจหรือไม่ที่จะลบบิลนี้?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/bills/${billId}`, {
+        method: "DELETE",
+      });
+      
+      if (res.ok) {
+        fetchBills(); // รีเฟรชข้อมูล
+        alert("ลบบิลเรียบร้อยแล้ว!");
+      } else {
+        throw new Error("Failed to delete bill");
+      }
+    } catch (error) {
+      console.error("Error deleting bill:", error);
+      alert("เกิดข้อผิดพลาดในการลบบิล");
+    }
+  };
+
+  const openEditModal = (bill: Bill) => {
+    setEditingBill(bill);
+    setShowEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setEditingBill(null);
+    setShowEditModal(false);
+  };
+
+  const updateBill = async (updatedBill: Partial<Bill>) => {
+    if (!editingBill) return;
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/bills/${editingBill.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedBill),
+      });
+      
+      if (res.ok) {
+        fetchBills(); // รีเฟรชข้อมูล
+        closeEditModal();
+        alert("อัปเดตบิลเรียบร้อยแล้ว!");
+      } else {
+        throw new Error("Failed to update bill");
+      }
+    } catch (error) {
+      console.error("Error updating bill:", error);
+      alert("เกิดข้อผิดพลาดในการอัปเดตบิล");
+    }
+  };
+
+  const openPreviewModal = (bill: Bill) => {
+    setPreviewBill(bill);
+    setShowPreviewModal(true);
+  };
+
+  const closePreviewModal = () => {
+    setPreviewBill(null);
+    setShowPreviewModal(false);
+  };
+
+  const handleDownloadFromBackend = async (format: "pdf" | "png") => {
+    if (!previewBill) return;
+
+    const waterUsed = Math.max(0, previewBill.waterCurr - previewBill.waterPrev);
+    const electricUsed = Math.max(0, previewBill.electricCurr - previewBill.electricPrev);
+    const bill = {
+      roomName: previewBill.roomName || `ห้อง ${previewBill.roomId}`,
+      roomRate: previewBill.roomRate,
+      waterPrev: previewBill.waterPrev,
+      waterCurr: previewBill.waterCurr,
+      waterUsed,
+      waterRate: previewBill.waterRate,
+      electricPrev: previewBill.electricPrev,
+      electricCurr: previewBill.electricCurr,
+      electricUsed,
+      electricRate: previewBill.electricRate,
+      total: previewBill.total,
+      billDate: `${previewBill.year}-${String(previewBill.month).padStart(2, '0')}-01`,
+    };
+
+    try {
+      const res = await fetch("http://localhost:4000/api/generate-bill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bill, format }),
+      });
+      
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = format === "pdf" ? "bill.pdf" : "bill.png";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        throw new Error("Failed to generate bill");
+      }
+    } catch (error) {
+      console.error("Error generating bill:", error);
+      alert("เกิดข้อผิดพลาดในการสร้างบิล");
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "paid": return "bg-green-100 text-green-800";
-      case "partial": return "bg-yellow-100 text-yellow-800";
-      case "unpaid": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "paid": return "text-green-600";
+      case "partial": return "text-yellow-600";
+      case "unpaid": return "text-orange-500";
+      default: return "text-gray-600";
     }
   };
 
@@ -96,9 +217,20 @@ const BillStatus: React.FC = () => {
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "paid": return <FaCheckCircle className="inline-block" />;
+      case "partial": return <FaMoneyCheckAlt className="inline-block" />;
+      case "unpaid": return <FaClock className="inline-block animate-pulse" />;
+      default: return <FaClock className="inline-block" />;
+    }
+  };
+
   const getRoomName = (bill: Bill) => {
     return bill.roomName || `ห้อง ${bill.roomId}`;
   };
+
+  const filteredBills = bills.filter(bill => `${bill.month}/${bill.year}` === selectedMonthYear);
 
   if (loading) {
     return (
@@ -109,59 +241,239 @@ const BillStatus: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-      <h2 className="text-2xl font-bold mb-6 text-slate-800 drop-shadow">สถานะการจ่ายเงิน</h2>
+    <div className="max-w-4xl mx-auto mt-8 bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/40">
+      <h2 className="text-3xl font-extrabold mb-6 text-slate-800 drop-shadow-lg tracking-tight text-center">สถานะการจ่ายเงิน</h2>
       
-      <GlassCard className="w-full max-w-4xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-semibold">ห้อง</th>
-                <th className="text-left py-3 px-4 font-semibold">เดือน/ปี</th>
-                <th className="text-left py-3 px-4 font-semibold">จำนวนเงิน</th>
-                <th className="text-left py-3 px-4 font-semibold">สถานะ</th>
-                <th className="text-left py-3 px-4 font-semibold">วันที่สร้าง</th>
-                <th className="text-left py-3 px-4 font-semibold">จัดการ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bills.map((bill) => (
-                <tr key={bill.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4">{getRoomName(bill)}</td>
-                  <td className="py-3 px-4">{bill.month}/{bill.year}</td>
-                  <td className="py-3 px-4 font-semibold">{bill.total.toLocaleString()} บาท</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(bill.status)}`}>
-                      {getStatusText(bill.status)}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600">
-                    {new Date(bill.createdAt).toLocaleDateString('th-TH')}
-                  </td>
-                  <td className="py-3 px-4">
+      <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 justify-between">
+        <label htmlFor="monthYear" className="font-semibold text-slate-700">เลือกเดือน/ปี:</label>
+        <select
+          id="monthYear"
+          className="rounded-lg px-4 py-2 border border-slate-300 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow transition-all text-lg"
+          value={selectedMonthYear}
+          onChange={e => setSelectedMonthYear(e.target.value)}
+        >
+          {monthYearList.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl shadow-inner">
+        <table className="w-full border-collapse bg-white/60 backdrop-blur rounded-xl">
+          <thead>
+            <tr className="bg-gradient-to-r from-blue-100/60 to-cyan-100/60 text-slate-700">
+              <th className="p-3 border-b font-bold text-center">ห้อง</th>
+              <th className="p-3 border-b font-bold text-center">เดือน/ปี</th>
+              <th className="p-3 border-b font-bold text-center">ยอดเงิน</th>
+              <th className="p-3 border-b font-bold text-center">วันที่สร้าง</th>
+              <th className="p-3 border-b font-bold text-center">สถานะ</th>
+              <th className="p-3 border-b font-bold text-center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredBills.map((bill) => (
+              <tr key={bill.id} className="text-center hover:bg-blue-50/60 transition-all">
+                <td className="p-3 border-b font-medium">{getRoomName(bill)}</td>
+                <td className="p-3 border-b">{bill.month}/{bill.year}</td>
+                <td className="p-3 border-b font-semibold">{bill.total.toLocaleString()} <span className="text-xs text-slate-500">฿</span></td>
+                <td className="p-3 border-b text-gray-600">
+                  {new Date(bill.createdAt).toLocaleDateString('th-TH')}
+                </td>
+                <td className="p-3 border-b font-bold flex items-center justify-center gap-2">
+                  <span className={`flex items-center gap-1 ${getStatusColor(bill.status)}`}>
+                    {getStatusIcon(bill.status)} {getStatusText(bill.status)}
+                  </span>
+                </td>
+                <td className="p-3 border-b">
+                  <div className="flex items-center justify-center gap-2">
                     <select
                       value={bill.status}
                       onChange={(e) => updateBillStatus(bill.id, e.target.value as "unpaid" | "paid" | "partial")}
-                      className="text-xs border rounded px-2 py-1"
+                      className="text-xs border rounded px-2 py-1 bg-white/80 focus:outline-none focus:ring-1 focus:ring-blue-300"
                     >
                       <option value="unpaid">ยังไม่จ่าย</option>
                       <option value="partial">จ่ายบางส่วน</option>
                       <option value="paid">จ่ายแล้ว</option>
                     </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <button
+                      onClick={() => openPreviewModal(bill)}
+                      className="p-1 text-green-500 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                      title="ดูบิลตัวอย่าง"
+                    >
+                      <FaEye className="text-sm" />
+                    </button>
+                    <button
+                      onClick={() => openEditModal(bill)}
+                      className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                      title="แก้ไขบิล"
+                    >
+                      <FaEdit className="text-sm" />
+                    </button>
+                    <button
+                      onClick={() => deleteBill(bill.id)}
+                      className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                      title="ลบบิล"
+                    >
+                      <FaTrash className="text-sm" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      {filteredBills.length === 0 && (
+        <div className="text-center text-slate-500 py-6">
+          {selectedMonthYear ? "ไม่มีข้อมูลในเดือนนี้" : "ยังไม่มีบิลในระบบ"}
         </div>
-        
-        {bills.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            ยังไม่มีบิลในระบบ
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingBill && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-xl font-bold mb-4">แก้ไขบิล</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">ห้อง</label>
+                <input
+                  type="text"
+                  value={editingBill.roomName || `ห้อง ${editingBill.roomId}`}
+                  disabled
+                  className="w-full px-3 py-2 border rounded-lg bg-gray-100"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">เดือน</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={editingBill.month}
+                    onChange={(e) => setEditingBill({...editingBill, month: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">ปี</label>
+                  <input
+                    type="number"
+                    min="2020"
+                    max="2030"
+                    value={editingBill.year}
+                    onChange={(e) => setEditingBill({...editingBill, year: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">ค่าน้ำ เดือนที่แล้ว</label>
+                  <input
+                    type="number"
+                    value={editingBill.waterPrev}
+                    onChange={(e) => setEditingBill({...editingBill, waterPrev: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">ค่าน้ำ เดือนนี้</label>
+                  <input
+                    type="number"
+                    value={editingBill.waterCurr}
+                    onChange={(e) => setEditingBill({...editingBill, waterCurr: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">ค่าไฟ เดือนที่แล้ว</label>
+                  <input
+                    type="number"
+                    value={editingBill.electricPrev}
+                    onChange={(e) => setEditingBill({...editingBill, electricPrev: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">ค่าไฟ เดือนนี้</label>
+                  <input
+                    type="number"
+                    value={editingBill.electricCurr}
+                    onChange={(e) => setEditingBill({...editingBill, electricCurr: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => updateBill(editingBill)}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold"
+                >
+                  บันทึก
+                </button>
+                <button
+                  onClick={closeEditModal}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-semibold"
+                >
+                  ยกเลิก
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-      </GlassCard>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreviewModal && previewBill && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="flex flex-col items-center justify-center w-full max-h-[95vh] overflow-y-auto">
+            <div
+              className="bg-white rounded-2xl shadow-lg"
+              style={{ width: 360, maxWidth: "100vw", margin: 0, padding: 0 }}
+            >
+              <BillTemplate
+                roomName={previewBill.roomName || `ห้อง ${previewBill.roomId}`}
+                roomRate={previewBill.roomRate}
+                waterPrev={previewBill.waterPrev}
+                waterCurr={previewBill.waterCurr}
+                waterUsed={Math.max(0, previewBill.waterCurr - previewBill.waterPrev)}
+                waterRate={previewBill.waterRate}
+                electricPrev={previewBill.electricPrev}
+                electricCurr={previewBill.electricCurr}
+                electricUsed={Math.max(0, previewBill.electricCurr - previewBill.electricPrev)}
+                electricRate={previewBill.electricRate}
+                total={previewBill.total}
+                billDate={`${previewBill.year}-${String(previewBill.month).padStart(2, '0')}-01`}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2 mt-4 justify-end w-full max-w-xs mx-auto py-2">
+              <button
+                onClick={() => handleDownloadFromBackend("pdf")}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow text-sm w-full"
+              >
+                ดาวน์โหลด PDF
+              </button>
+              <button
+                onClick={() => handleDownloadFromBackend("png")}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow text-sm w-full"
+              >
+                ดาวน์โหลด PNG
+              </button>
+              <button
+                onClick={closePreviewModal}
+                className="bg-gray-300 hover:bg-gray-400 text-slate-700 px-4 py-2 rounded-lg shadow text-sm w-full"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
