@@ -24,11 +24,12 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   const amount = bill.total;
   let qrBase64 = "";
   try {
-    const promptpay = require('promptpay-qr');
-    const QRCode = require('qrcode');
-    const payload = promptpay.generate(promptpayNumber, { amount });
-    qrBase64 = await QRCode.toDataURL(payload, { margin: 1, width: 160 });
+    const promptpay = (await import('promptpay-qr')).default;
+    const QRCode = await import('qrcode');
+    const payload = promptpay(promptpayNumber, { amount });
+    qrBase64 = await QRCode.default.toDataURL(payload, { margin: 1, width: 160 });
   } catch (e) {
+    console.error("QR ERROR", e);
     qrBase64 = "";
   }
 
