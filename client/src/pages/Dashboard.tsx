@@ -1,8 +1,7 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 import { Building2, Users, Banknote, Zap, Droplets } from 'lucide-react';
-import { useRoomData } from '@/hooks/useRoomData';
+import { useRoomData } from '../hooks/useRoomData';
 
 const Dashboard = () => {
   const { rooms, getTotalRevenue, getOccupiedRooms } = useRoomData();
@@ -12,7 +11,7 @@ const Dashboard = () => {
   const occupancyRate = (occupiedRooms / rooms.length) * 100;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pl-6 pr-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -132,4 +131,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard; 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle, FaClock, FaMoneyCheckAlt, FaPaperclip, FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import BillTemplate from "../components/BillTemplate";
+import { useIsMobile } from "../hooks/use-mobile";
+import { useOrientation } from "../hooks/useOrientation";
 
 interface Bill {
   id: number;
@@ -34,11 +36,13 @@ const BillStatus: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonthYear, setSelectedMonthYear] = useState("");
-  const [monthYearList, setMonthYearList] = useState<string[]>([]);
+  const [monthYearList, setMonthYearList] = useState<{ yearMap: Record<string, string[]>, sortedYears: string[] }>({ yearMap: {}, sortedYears: [] });
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [previewBill, setPreviewBill] = useState<Bill | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const isMobile = useIsMobile();
+  const orientation = useOrientation();
 
   useEffect(() => {
     fetchBills();
@@ -50,11 +54,26 @@ const BillStatus: React.FC = () => {
       const res = await fetch("http://localhost:4000/api/bills");
       const data = await res.json();
       setBills(data);
-      
-      // สร้าง monthYearList
-      const months = Array.from(new Set(data.map((b: Bill) => `${b.month}/${b.year}`))) as string[];
-      setMonthYearList(months);
-      setSelectedMonthYear(months[0] || "");
+
+      // optgroup + default เป็นเดือน/ปีปัจจุบัน
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      const yearMap: Record<string, string[]> = {};
+      data.forEach((b: Bill) => {
+        const y = String(b.year);
+        const m = String(Number(b.month));
+        if (!yearMap[y]) yearMap[y] = [];
+        if (!yearMap[y].includes(m)) yearMap[y].push(m);
+      });
+      Object.keys(yearMap).forEach(y => yearMap[y].sort((a, b) => Number(a) - Number(b)));
+      const sortedYears = Object.keys(yearMap).sort((a, b) => Number(b) - Number(a));
+      let defaultMonthYear = `${currentMonth}/${currentYear}`;
+      if (!Object.entries(yearMap).some(([y, ms]) => y === String(currentYear) && ms.includes(String(currentMonth)))) {
+        defaultMonthYear = sortedYears.length ? `${yearMap[sortedYears[0]][0]}/${sortedYears[0]}` : '';
+      }
+      setMonthYearList({ yearMap, sortedYears });
+      setSelectedMonthYear(defaultMonthYear);
     } catch (error) {
       console.error("Error fetching bills:", error);
     }
@@ -230,7 +249,10 @@ const BillStatus: React.FC = () => {
     return bill.roomName || `ห้อง ${bill.roomId}`;
   };
 
-  const filteredBills = bills.filter(bill => `${bill.month}/${bill.year}` === selectedMonthYear);
+  // filter
+  const filteredBills = bills.filter(
+    bill => `${Number(bill.month)}/${bill.year}` === selectedMonthYear
+  );
 
   if (loading) {
     return (
@@ -242,6 +264,23 @@ const BillStatus: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto mt-8 bg-white/60 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/40">
+      {/* Overlay แจ้งเตือนการหมุนจอ */}
+      {isMobile && orientation === "portrait" && !showEditModal && !showPreviewModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+          <div className="bg-white rounded-xl p-6 text-center shadow-lg">
+            <div className="text-lg font-bold mb-2">แนะนำให้หมุนจอเป็นแนวนอน</div>
+            <div className="text-gray-500">เพื่อดูตารางข้อมูลได้เต็มหน้าจอ</div>
+          </div>
+        </div>
+      )}
+      {isMobile && orientation === "landscape" && (showEditModal || showPreviewModal) && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+          <div className="bg-white rounded-xl p-6 text-center shadow-lg">
+            <div className="text-lg font-bold mb-2">แนะนำให้หมุนจอเป็นแนวตั้ง</div>
+            <div className="text-gray-500">เพื่อดูข้อมูลบิลหรือแก้ไขได้สะดวกขึ้น</div>
+          </div>
+        </div>
+      )}
       <h2 className="text-3xl font-extrabold mb-6 text-slate-800 drop-shadow-lg tracking-tight text-center">สถานะการจ่ายเงิน</h2>
       
       <div className="mb-6 flex flex-col sm:flex-row items-center gap-3 justify-between">
@@ -252,8 +291,17 @@ const BillStatus: React.FC = () => {
           value={selectedMonthYear}
           onChange={e => setSelectedMonthYear(e.target.value)}
         >
-          {monthYearList.map(m => (
-            <option key={m} value={m}>{m}</option>
+          {monthYearList.sortedYears.map(year => (
+            <optgroup key={year} label={`ปี ${year}`}>
+              {monthYearList.yearMap[year].map(month => {
+                const value = `${month}/${year}`;
+                return (
+                  <option key={value} value={value}>
+                    {`เดือน ${month}/${year}`}
+                  </option>
+                );
+              })}
+            </optgroup>
           ))}
         </select>
       </div>

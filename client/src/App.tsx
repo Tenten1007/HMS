@@ -12,7 +12,7 @@ import Settings from "./pages/Settings";
 import "./styles/glass.css";
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./pages/Dashboard";
 const queryClient = new QueryClient();
 
 const App = () => (
