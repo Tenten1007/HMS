@@ -22,6 +22,7 @@ app.use("/api/bills", billsRouter);
 app.use("/api/payments", paymentsRouter);
 app.use("/api/tenants", tenantsRouter);
 app.use("/api", lineRouter);
+app.use('/bills', express.static(path.join(__dirname, 'public/bills')));
 
 // Endpoint: POST /api/generate-bill
 // body: { ...billData, format: "pdf" | "png" }

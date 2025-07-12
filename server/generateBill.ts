@@ -10,10 +10,15 @@ function formatMoney(num: number | string) {
   return Number(num).toLocaleString("en-US");
 }
 
+function getField(obj: any, camel: string, snake: string) {
+  return obj[camel] ?? obj[snake] ?? "";
+}
+
 export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
+  console.log("DEBUG BILL DATA:", bill);
   // คำนวณค่าน้ำและค่าไฟ
-  const waterCost = bill.waterUsed * bill.waterRate;
-  const electricCost = bill.electricUsed * bill.electricRate;
+  const waterCost = Number(getField(bill, "waterUsed", "water_used")) * Number(getField(bill, "waterRate", "water_rate"));
+  const electricCost = Number(getField(bill, "electricUsed", "electric_used")) * Number(getField(bill, "electricRate", "electric_rate"));
 
   // Load HTML template
   const templatePath = path.join(__dirname, "templates", "bill.html");
@@ -21,7 +26,7 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
 
   // สร้าง QR Code PromptPay (ใช้ require แบบ dynamic)
   const promptpayNumber = process.env.PROMPTPAY_NUMBER || "0800000000";
-  const amount = bill.total;
+  const amount = Number(bill.total); // แปลงเป็น number
   let qrBase64 = "";
   try {
     const promptpay = (await import('promptpay-qr')).default;
@@ -34,29 +39,31 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   }
 
   // Simple replace (ควรใช้ template engine จริงจัง)
-  html = html.replace(/{{roomName}}/g, String(bill.roomName))
-    .replace(/{{roomRate}}/g, formatMoney(bill.roomRate))
-    .replace(/{{waterPrev}}/g, String(bill.waterPrev))
-    .replace(/{{waterCurr}}/g, String(bill.waterCurr))
-    .replace(/{{waterUsed}}/g, String(bill.waterUsed))
-    .replace(/{{waterRate}}/g, String(bill.waterRate))
+  html = html.replace(/{{roomName}}/g, String(getField(bill, "roomName", "room_name")))
+    .replace(/{{roomRate}}/g, formatMoney(getField(bill, "roomRate", "room_rate")))
+    .replace(/{{waterPrev}}/g, String(getField(bill, "waterPrev", "water_prev")))
+    .replace(/{{waterCurr}}/g, String(getField(bill, "waterCurr", "water_curr")))
+    .replace(/{{waterUsed}}/g, String(getField(bill, "waterUsed", "water_used")))
+    .replace(/{{waterRate}}/g, String(getField(bill, "waterRate", "water_rate")))
     .replace(/{{waterCost}}/g, formatMoney(waterCost))
-    .replace(/{{electricPrev}}/g, String(bill.electricPrev))
-    .replace(/{{electricCurr}}/g, String(bill.electricCurr))
-    .replace(/{{electricUsed}}/g, String(bill.electricUsed))
-    .replace(/{{electricRate}}/g, String(bill.electricRate))
+    .replace(/{{electricPrev}}/g, String(getField(bill, "electricPrev", "electric_prev")))
+    .replace(/{{electricCurr}}/g, String(getField(bill, "electricCurr", "electric_curr")))
+    .replace(/{{electricUsed}}/g, String(getField(bill, "electricUsed", "electric_used")))
+    .replace(/{{electricRate}}/g, String(getField(bill, "electricRate", "electric_rate")))
     .replace(/{{electricCost}}/g, formatMoney(electricCost))
-    .replace(/{{total}}/g, formatMoney(bill.total))
+    .replace(/{{total}}/g, formatMoney(getField(bill, "total", "total")))
     .replace(/{{promptpay_qr}}/g, qrBase64 ? `<img src='${qrBase64}' alt='PromptPay QR' style='display:block;margin:12px auto 0;width:160px;height:160px;'>` : "");
+  console.log("DEBUG HTML:", html);
 
   const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
+  await page.waitForTimeout(1000); // รอให้ render สมบูรณ์
   let buffer: Buffer;
   if (format === "pdf") {
     buffer = await page.pdf({ format: "A5", printBackground: true });
   } else {
-    buffer = await page.screenshot({ type: "png", fullPage: true });
+    buffer = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: 1024, height: 1024 } });
   }
   await browser.close();
   return buffer;

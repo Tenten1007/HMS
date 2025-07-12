@@ -1,9 +1,10 @@
-import express from "express";
+// @ts-ignore
+const express = require("express");
 const app = express();
 
 app.use(express.json()); // สำคัญ! ต้อง parse JSON
 
-app.post("/webhook", (req, res) => {
+app.post("/webhook", (req: any, res: any) => {
   console.log("LINE Webhook Event:", JSON.stringify(req.body, null, 2));
   res.sendStatus(200);
 });
