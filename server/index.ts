@@ -4,7 +4,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import puppeteer from "puppeteer";
+import { generateBill } from "./generateBill.js";
 import roomsRouter from "./routes/rooms.js";
 import billsRouter from "./routes/bills.js";
 import paymentsRouter from "./routes/payments.js";
@@ -27,44 +27,15 @@ app.post("/api/generate-bill", async (req: Request, res: Response) => {
   const { bill, format = "pdf" } = req.body;
   if (!bill) return res.status(400).json({ error: "Missing bill data" });
 
-  // คำนวณค่าน้ำและค่าไฟ
-  const waterCost = bill.waterUsed * bill.waterRate;
-  const electricCost = bill.electricUsed * bill.electricRate;
-
-  // Load HTML template (placeholder)
-  const templatePath = path.join(__dirname, "templates", "bill.html");
-  let html = fs.readFileSync(templatePath, "utf8");
-
-  // Simple replace (ควรใช้ template engine จริงจัง)
-  html = html.replace(/{{roomName}}/g, String(bill.roomName))
-    .replace(/{{roomRate}}/g, String(bill.roomRate))
-    .replace(/{{waterPrev}}/g, String(bill.waterPrev))
-    .replace(/{{waterCurr}}/g, String(bill.waterCurr))
-    .replace(/{{waterUsed}}/g, String(bill.waterUsed))
-    .replace(/{{waterRate}}/g, String(bill.waterRate))
-    .replace(/{{waterCost}}/g, String(waterCost))
-    .replace(/{{electricPrev}}/g, String(bill.electricPrev))
-    .replace(/{{electricCurr}}/g, String(bill.electricCurr))
-    .replace(/{{electricUsed}}/g, String(bill.electricUsed))
-    .replace(/{{electricRate}}/g, String(bill.electricRate))
-    .replace(/{{electricCost}}/g, String(electricCost))
-    .replace(/{{total}}/g, String(bill.total));
-
   try {
-    const browser = await puppeteer.launch({ headless: "new" });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-    let buffer: Buffer;
+    const buffer = await generateBill(bill, format);
     if (format === "pdf") {
-      buffer = await page.pdf({ format: "A5", printBackground: true });
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", "attachment; filename=bill.pdf");
     } else {
-      buffer = await page.screenshot({ type: "png", fullPage: true });
       res.setHeader("Content-Type", "image/png");
       res.setHeader("Content-Disposition", "attachment; filename=bill.png");
     }
-    await browser.close();
     res.send(buffer);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

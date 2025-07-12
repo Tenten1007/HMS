@@ -12,12 +12,15 @@
       padding: 0;
     }
     .bill {
-      width: 360px;
-      margin: 24px auto;
-      border-radius: 18px;
-      box-shadow: 0 2px 12px #0001;
-      padding: 32px 24px;
+      
+      width: 300px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px 12px;
+      box-shadow: 0 2px 12px #0002;
       box-sizing: border-box;
+      margin: 0 auto;
+      margin-top: 100px;
     }
     .bill-title {
       text-align: center;
@@ -34,13 +37,11 @@
       font-size: 1rem;
       font-weight: 500;
     }
-
     .bill-value {
       font-weight: bold;
       font-size: 1.1rem;
       color: #111;
     }
-    
     .bill-total {
       display: flex;
       justify-content: space-between;
@@ -66,7 +67,7 @@
   <div class="bill">
     <div class="bill-title">ใบแจ้งหนี้ค่าห้องพัก</div>
     <div class="bill-section">
-      <span class="bill-label">ห้อง:</span> <span class="bill-value">{{roomName}}</span>
+      <span class="bill-label"></span> <span class="bill-value">{{roomName}}</span>
     </div>
     <div class="bill-section">
       <span class="bill-label">ค่าห้อง:</span> <span class="bill-value">{{roomRate}} บาท</span>
