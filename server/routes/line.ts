@@ -2,18 +2,13 @@ import express from "express";
 import fetch from "node-fetch";
 import { query } from "../db.js";
 import { generateBill } from "../generateBill.js";
-import fs from "fs";
-import path from "path";
+import { uploadToStorage } from "../lib/uploadToStorage.js";
 
 const router = express.Router();
 
 const CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 const GROUP_ID = process.env.LINE_GROUP_ID;
-const PUBLIC_URL = process.env.PUBLIC_URL || ""; // เช่น https://xxxx.ngrok-free.app
-const billsDir = path.join(process.cwd(), "server", "public", "bills");
-
-// เสิร์ฟ static files (ควรเพิ่มใน index.ts ด้วย)
-// app.use('/bills', express.static(path.join(__dirname, 'public/bills')));
+const BUCKET_FOLDER = "bills"; // Optional: prefix folder in bucket
 
 router.post("/send-bills-to-line", async (req, res) => {
   try {
@@ -29,30 +24,19 @@ router.post("/send-bills-to-line", async (req, res) => {
     const unpaidBills = bills.filter((bill: any) => bill.status === "unpaid");
     if (!unpaidBills.length) return res.status(404).json({ error: "ไม่พบข้อมูลบิลที่ยังไม่จ่ายในเดือน/ปีนี้" });
 
-    // สร้างโฟลเดอร์ถ้ายังไม่มี
-    if (!fs.existsSync(billsDir)) fs.mkdirSync(billsDir, { recursive: true });
-
     for (const bill of unpaidBills) {
-      // 1. generateBill PNG
+      // 1. generateBill PNG (ขาว-ดำ, viewport อัตโนมัติ)
       const buffer = await generateBill(bill, "png");
-      // ใช้ roomId (หรือ room_id) และ timestamp เป็นชื่อไฟล์ (ไม่มีภาษาไทย)
-      const safeRoom = (bill.roomId || bill.room_id || "room").toString().replace(/[^a-zA-Z0-9_-]/g, "");
-      const timestamp = Date.now();
-      const fileName = `bill_${safeRoom}_${bill.month}_${bill.year}_${timestamp}.png`;
-      const filePath = path.join(billsDir, fileName);
-      fs.writeFileSync(filePath, buffer);
-      await new Promise(r => setTimeout(r, 2000)); // wait ให้ไฟล์พร้อมเสิร์ฟ (2 วินาที)
-      // 2. สร้าง imageUrl (ต้องเป็น public URL)
-      const imageUrl = `${PUBLIC_URL}/bills/${fileName}`;
+      // 2. upload PNG to Google Cloud Storage
+      const fileName = `${BUCKET_FOLDER}/bill_${bill.roomId || bill.room_id}_${bill.month}_${bill.year}_${Date.now()}.png`;
+      const { directLink } = await uploadToStorage({ buffer, filename: fileName });
       // 3. ส่งข้อความ+รูปภาพเข้าไลน์กลุ่ม
-      const message = `${bill.room_name || bill.roomId || '-'}: ${Number(bill.total).toLocaleString()} บาท\nกรุณาชำระเงินภายในวันที่ 5 ของเดือนถัดไป`;
-      // ทดสอบ: ใช้ URL รูปจาก Unsplash แทน imageUrl ที่ generate เอง
-      const testImageUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80";
+      const message = `${bill.room_name || bill.roomId || '-'}: ${Number(bill.total).toLocaleString()} บาท\nกรุณาชำระเงินก่อนวันที่ 5 ของเดือนถัดไป`;
       const lineBody = {
         to: GROUP_ID,
         messages: [
           { type: "text", text: message },
-          { type: "image", originalContentUrl: testImageUrl, previewImageUrl: testImageUrl }
+          { type: "image", originalContentUrl: directLink, previewImageUrl: directLink }
         ]
       };
       console.log("DEBUG LINE BODY", JSON.stringify(lineBody, null, 2));
