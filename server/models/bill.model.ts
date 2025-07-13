@@ -17,6 +17,7 @@ export interface Bill {
   status: "unpaid" | "paid" | "partial";
   createdAt: string;
   updatedAt: string;
+  paidAmount?: number; // เพิ่ม field นี้
 }
 
 export function toBill(row: any): Bill {
@@ -39,5 +40,6 @@ export function toBill(row: any): Bill {
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    paidAmount: row.paid_amount !== undefined ? Number(row.paid_amount) : 0, // เพิ่ม mapping
   };
 } 

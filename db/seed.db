@@ -75,3 +75,5 @@ INSERT INTO payments (bill_id, amount, method, slip_url, note, paid_at, created_
 INSERT INTO tenants (room_id, name, phone, start_date, end_date, note) VALUES
   (2, 'สมชาย ใจดี', '081-234-5678', '2024-01-01', NULL, 'จ่ายตรงเวลา'),
   (4, 'อรทัย สายใจ', '089-999-8888', '2024-05-01', NULL, '');
+
+ALTER TABLE bills ADD COLUMN IF NOT EXISTS paid_amount NUMERIC(12,2) DEFAULT 0;

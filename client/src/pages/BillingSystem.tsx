@@ -34,12 +34,14 @@ const BillingSystem: React.FC = () => {
   const [preview, setPreview] = useState(false);
   const [roomOptions, setRoomOptions] = useState<{value: string, label: string, id: number}[]>([]);
   const [allBills, setAllBills] = useState<any[]>([]);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:4000/api/rooms")
       .then(res => res.json())
       .then(data => {
-        setRoomOptions(data.map(room => ({ value: room.ชื่อ, label: room.ชื่อ, id: room.id })));
+        const activeRooms = data.filter((room: any) => room.isActive);
+        setRoomOptions(activeRooms.map((room: any) => ({ value: room.ชื่อ, label: room.ชื่อ, id: room.id })));
       });
     // ดึงบิลทั้งหมดมาเก็บไว้
     fetch("http://localhost:4000/api/bills")
@@ -107,7 +109,20 @@ const BillingSystem: React.FC = () => {
       
       if (res.ok) {
         const savedBill = await res.json();
-        alert("บันทึกบิลเรียบร้อยแล้ว!");
+        setShowSuccess(true);
+        // รีเซ็ตฟอร์ม (เลือกห้องถัดไปถ้ามี)
+        const currentIdx = roomOptions.findIndex(r => r.value === form.roomName);
+        const nextRoom = roomOptions[(currentIdx + 1) % roomOptions.length];
+        setForm({
+          roomName: nextRoom.value,
+          roomRate: getRate("roomRate", 3500),
+          waterPrev: 0,
+          waterCurr: 0,
+          electricPrev: 0,
+          electricCurr: 0,
+          billDate: todayStr(),
+        });
+        setTimeout(() => setShowSuccess(false), 2000);
         return savedBill;
       } else {
         throw new Error("Failed to save bill");
@@ -250,6 +265,11 @@ const BillingSystem: React.FC = () => {
           </button>
         </div>
       </GlassCard>
+      {showSuccess && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg text-lg font-bold animate-fade-in">
+          ✅ บันทึกบิลสำเร็จ! พร้อมกรอกห้องถัดไป
+        </div>
+      )}
       {/* Modal/Overlay สำหรับแสดง BillTemplate และดาวน์โหลด PDF/PNG */}
       {preview && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-0 m-0">

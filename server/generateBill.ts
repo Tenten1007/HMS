@@ -25,7 +25,12 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
 
   // สร้าง QR Code PromptPay (ใช้ require แบบ dynamic)
   const promptpayNumber = process.env.PROMPTPAY_NUMBER || "0800000000";
-  const amount = Number(bill.total); // แปลงเป็น number
+  let amount = Number(bill.total);
+  if (bill.paid_amount !== undefined && bill.paid_amount > 0 && bill.paid_amount < bill.total) {
+    amount = Number(bill.total) - Number(bill.paid_amount);
+  } else if (bill.paidAmount !== undefined && bill.paidAmount > 0 && bill.paidAmount < bill.total) {
+    amount = Number(bill.total) - Number(bill.paidAmount);
+  }
   let qrBase64 = "";
   try {
     const promptpay = (await import('promptpay-qr')).default;

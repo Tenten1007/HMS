@@ -23,6 +23,7 @@ interface Bill {
   status: "unpaid" | "paid" | "partial";
   createdAt: string;
   updatedAt: string;
+  paidAmount?: number; // เพิ่ม field นี้
 }
 
 interface Room {
@@ -34,6 +35,7 @@ interface Room {
 const BillStatus: React.FC = () => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const activeRooms = rooms.filter((r: any) => r.isActive);
   const [loading, setLoading] = useState(true);
   const [selectedMonthYear, setSelectedMonthYear] = useState("");
   const [monthYearList, setMonthYearList] = useState<{ yearMap: Record<string, string[]>, sortedYears: string[] }>({ yearMap: {}, sortedYears: [] });
@@ -148,7 +150,7 @@ const BillStatus: React.FC = () => {
       const res = await fetch(`http://localhost:4000/api/bills/${editingBill.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedBill),
+        body: JSON.stringify({ ...updatedBill, paidAmount: editingBill.paidAmount ?? 0 }),
       });
       
       if (res.ok) {
@@ -359,13 +361,22 @@ const BillStatus: React.FC = () => {
               <tr key={bill.id} className="text-center hover:bg-blue-50/60 transition-all">
                 <td className="p-3 border-b font-medium">{getRoomName(bill)}</td>
                 <td className="p-3 border-b">{bill.month}/{bill.year}</td>
-                <td className="p-3 border-b font-semibold">{bill.total.toLocaleString()} <span className="text-xs text-slate-500">฿</span></td>
+                <td className="p-3 border-b font-semibold whitespace-nowrap overflow-hidden" style={{maxWidth: 180, fontFamily: 'Sarabun, Tahoma, Arial, sans-serif'}}>
+                  <span className="font-normal">{Number(bill.total).toLocaleString('en-US', { maximumFractionDigits: 0 })} ฿</span>
+                  {bill.status === 'partial' &&bill.paidAmount && bill.paidAmount > 0 && (
+                    <span className="ml-1 text-[11px] text-green-700 font-normal">· จ่าย {Number(bill.paidAmount).toLocaleString('en-US', { maximumFractionDigits: 0 })}฿</span>
+                  )}
+                  {bill.status === 'partial' && bill.paidAmount && bill.paidAmount > 0 && bill.paidAmount < bill.total && (
+                    <span className="ml-1 text-[11px] text-red-600 font-normal">· เหลือ {(Number(bill.total) - Number(bill.paidAmount)).toLocaleString('en-US', { maximumFractionDigits: 0 })}฿</span>
+                  )}
+                </td>
                 <td className="p-3 border-b text-gray-600">
                   {new Date(bill.createdAt).toLocaleDateString('th-TH')}
                 </td>
-                <td className="p-3 border-b font-bold flex items-center justify-center gap-2">
-                  <span className={`flex items-center gap-1 ${getStatusColor(bill.status)}`}>
-                    {getStatusIcon(bill.status)} {getStatusText(bill.status)}
+                <td className="p-3 border-b font-bold text-center whitespace-nowrap" style={{minWidth: 120, height: 32}}>
+                  <span className={`inline-flex items-center gap-1 text-sm ${getStatusColor(bill.status)}`}>
+                    {getStatusIcon(bill.status)}
+                    {getStatusText(bill.status)}
                   </span>
                 </td>
                 <td className="p-3 border-b">
@@ -493,6 +504,25 @@ const BillStatus: React.FC = () => {
                   />
                 </div>
               </div>
+              {editingBill.status === 'partial' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">จำนวนเงินที่จ่ายแล้ว (บาท)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max={editingBill.total}
+                    value={editingBill.paidAmount ?? 0}
+                    onChange={(e) => {
+                      let v = Number(e.target.value);
+                      if (v > editingBill.total) v = editingBill.total;
+                      if (v < 0) v = 0;
+                      setEditingBill({ ...editingBill, paidAmount: v });
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300"
+                  />
+                  <div className="text-xs text-slate-500 mt-1">ยอดคงเหลือ: <span className="text-red-600 font-normal">{(editingBill.total - (editingBill.paidAmount ?? 0)).toLocaleString()} บาท</span></div>
+                </div>
+              )}
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => updateBill(editingBill)}
@@ -534,6 +564,7 @@ const BillStatus: React.FC = () => {
                 total={previewBill.total}
                 billDate={`${previewBill.year}-${String(previewBill.month).padStart(2, '0')}-01`}
                 promptpayNumber={PROMPTPAY_NUMBER}
+                paidAmount={previewBill.paidAmount}
               />
             </div>
             <div className="flex flex-wrap gap-2 mt-4 justify-end w-full max-w-xs mx-auto py-2">

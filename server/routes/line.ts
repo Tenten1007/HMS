@@ -20,11 +20,11 @@ router.post("/send-bills-to-line", async (req, res) => {
       [year, month]
     );
     const bills = billsResult.rows;
-    // Filter เฉพาะบิลที่ยังไม่จ่าย
-    const unpaidBills = bills.filter((bill: any) => bill.status === "unpaid");
-    if (!unpaidBills.length) return res.status(404).json({ error: "ไม่พบข้อมูลบิลที่ยังไม่จ่ายในเดือน/ปีนี้" });
+    // Filter เฉพาะบิลที่ยังไม่จ่ายหรือจ่ายบางส่วน
+    const targetBills = bills.filter((bill: any) => bill.status === "unpaid" || bill.status === "partial");
+    if (!targetBills.length) return res.status(404).json({ error: "ไม่พบข้อมูลบิลที่ยังไม่จ่ายหรือจ่ายบางส่วนในเดือน/ปีนี้" });
 
-    for (const bill of unpaidBills) {
+    for (const bill of targetBills) {
       // 1. generateBill PNG (ขาว-ดำ, viewport อัตโนมัติ)
       const buffer = await generateBill(bill, "png");
       // 2. upload PNG to Google Cloud Storage

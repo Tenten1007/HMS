@@ -26,6 +26,7 @@ router.get("/", async (req, res) => {
         id: room.id,
         ชื่อ: room.name,
         สถานะ: tenants.length > 0 ? 'มีผู้เช่า' : 'ว่าง',
+        isActive: tenants.length > 0,
         tenants: tenants.map((t: any) => ({
           id: t.id,
           name: t.name,

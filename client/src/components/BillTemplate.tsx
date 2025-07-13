@@ -16,6 +16,7 @@ interface BillTemplateProps {
   total: number;
   billDate?: string; // เพิ่ม prop วันที่
   promptpayNumber?: string; // เพิ่ม prop เบอร์พร้อมเพย์ (optional)
+  paidAmount?: number; // เพิ่ม prop สำหรับยอดที่จ่ายแล้ว
 }
 
 const BillTemplate: React.FC<BillTemplateProps> = ({
@@ -32,12 +33,17 @@ const BillTemplate: React.FC<BillTemplateProps> = ({
   total,
   billDate, // destructure billDate
   promptpayNumber,
+  paidAmount,
 }) => {
   // สร้าง payload พร้อมเพย์ (ถ้ามีเบอร์)
   let qrPayload = "";
+  let payAmount = total;
+  if (paidAmount !== undefined && paidAmount > 0 && paidAmount < total) {
+    payAmount = total - paidAmount;
+  }
   if (promptpayNumber) {
     try {
-      qrPayload = generatePromptPayPayload(promptpayNumber, total);
+      qrPayload = generatePromptPayPayload(promptpayNumber, payAmount);
     } catch (e) {
       qrPayload = "";
     }
@@ -78,9 +84,17 @@ const BillTemplate: React.FC<BillTemplateProps> = ({
         <div className="text-sm">หน่วยไฟที่ใช้: <span className="font-semibold">{electricUsed}</span> หน่วย</div>
         <div className="text-sm">ค่าไฟ: <span className="font-semibold">{(electricUsed * electricRate).toLocaleString()}</span> บาท ({electricRate} บาท/หน่วย)</div>
       </div>
-      <div className="flex justify-between items-center mt-6">
-        <span className="font-bold text-lg">รวมทั้งสิ้น</span>
-        <span className="text-2xl font-bold text-green-600">{total.toLocaleString()} บาท</span>
+      <div className="flex flex-col gap-1 mt-6">
+        <div className="flex justify-between items-center">
+          <span className="font-bold text-lg">รวมทั้งสิ้น</span>
+          <span className="text-2xl font-bold text-green-600">{total.toLocaleString()} บาท</span>
+        </div>
+        {paidAmount !== undefined && paidAmount > 0 && paidAmount < total && (
+          <div className="flex justify-between items-center">
+            <span className="font-bold text-lg text-red-600">ยอดคงเหลือ</span>
+            <span className="text-xl font-bold text-red-600">{(total - paidAmount).toLocaleString()} บาท</span>
+          </div>
+        )}
       </div>
       {qrPayload && (
         <div className="flex flex-col items-center mt-4">

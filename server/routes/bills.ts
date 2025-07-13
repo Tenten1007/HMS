@@ -21,12 +21,12 @@ router.get("/", async (req, res) => {
 
 // POST /api/bills
 router.post("/", async (req, res) => {
-  const { roomId, month, year, roomRate, waterPrev, waterCurr, waterUsed, waterRate, electricPrev, electricCurr, electricUsed, electricRate, total, status } = req.body;
+  const { roomId, month, year, roomRate, waterPrev, waterCurr, waterUsed, waterRate, electricPrev, electricCurr, electricUsed, electricRate, total, status, paidAmount } = req.body;
   try {
     const result = await query(
-      `INSERT INTO bills (room_id, month, year, room_rate, water_prev, water_curr, water_used, water_rate, electric_prev, electric_curr, electric_used, electric_rate, total, status, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW(),NOW()) RETURNING *`,
-      [roomId, month, year, roomRate, waterPrev, waterCurr, waterUsed, waterRate, electricPrev, electricCurr, electricUsed, electricRate, total, status]
+      `INSERT INTO bills (room_id, month, year, room_rate, water_prev, water_curr, water_used, water_rate, electric_prev, electric_curr, electric_used, electric_rate, total, status, paid_amount, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,NOW(),NOW()) RETURNING *`,
+      [roomId, month, year, roomRate, waterPrev, waterCurr, waterUsed, waterRate, electricPrev, electricCurr, electricUsed, electricRate, total, status, paidAmount ?? 0]
     );
     res.status(201).json(toBill(result.rows[0]));
   } catch (err) {
@@ -37,7 +37,7 @@ router.post("/", async (req, res) => {
 // PUT /api/bills/:id
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const { status, month, year, waterPrev, waterCurr, electricPrev, electricCurr } = req.body;
+  const { status, month, year, waterPrev, waterCurr, electricPrev, electricCurr, paidAmount } = req.body;
   
   try {
     let queryText = "UPDATE bills SET updated_at=NOW()";
@@ -77,6 +77,11 @@ router.put("/:id", async (req, res) => {
     if (electricCurr !== undefined) {
       queryText += `, electric_curr=$${paramIndex}`;
       params.push(electricCurr);
+      paramIndex++;
+    }
+    if (paidAmount !== undefined) {
+      queryText += `, paid_amount=$${paramIndex}`;
+      params.push(paidAmount);
       paramIndex++;
     }
 
