@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+dist
+*.db
+*.env
+*.local
+*.log
+*.md
+ivory-signer-465805-e5-487054ab50fe.json 
