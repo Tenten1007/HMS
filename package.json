@@ -8,7 +8,7 @@
     "dev:server": "nodemon --watch ./server --ext ts --exec \"./node_modules/.bin/tsx server/index.ts\"",
     "dev": "concurrently \"npm run dev:server\" \"cd client && npm run dev\"",
     "install:all": "npm install && cd client && npm install --legacy-peer-deps",
-    "build:server": "tsc -p server/tsconfig.json",
+    "build:server": "npx tsc -p server/tsconfig.json",
     "build": "npm run build:server && cd client && npm run build"
   },
   "dependencies": {
