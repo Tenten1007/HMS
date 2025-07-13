@@ -203,10 +203,16 @@ const BillStatus: React.FC = () => {
       
       if (res.ok) {
         const blob = await res.blob();
+        // ดึงชื่อไฟล์จาก header
+        let filename = format === "pdf" ? "bill.pdf" : "bill.png";
+        const disposition = res.headers.get("Content-Disposition");
+        if (disposition && disposition.includes("filename=")) {
+          filename = disposition.split("filename=")[1].replace(/["]+/g, "");
+        }
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = format === "pdf" ? "bill.pdf" : "bill.png";
+        a.download = filename;
         a.click();
         window.URL.revokeObjectURL(url);
       } else {

@@ -39,7 +39,6 @@ router.post("/send-bills-to-line", async (req, res) => {
           { type: "image", originalContentUrl: directLink, previewImageUrl: directLink }
         ]
       };
-      console.log("DEBUG LINE BODY", JSON.stringify(lineBody, null, 2));
       const lineRes = await fetch("https://api.line.me/v2/bot/message/push", {
         method: "POST",
         headers: {
@@ -49,7 +48,6 @@ router.post("/send-bills-to-line", async (req, res) => {
         body: JSON.stringify(lineBody)
       });
       const lineJson = await lineRes.json();
-      console.log("DEBUG LINE RESPONSE", lineJson);
       if (lineJson.message) throw new Error(lineJson.message);
     }
 

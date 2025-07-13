@@ -15,7 +15,6 @@ function getField(obj: any, camel: string, snake: string) {
 }
 
 export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
-  console.log("DEBUG BILL DATA:", bill);
   // คำนวณค่าน้ำและค่าไฟ
   const waterCost = Number(getField(bill, "waterUsed", "water_used")) * Number(getField(bill, "waterRate", "water_rate"));
   const electricCost = Number(getField(bill, "electricUsed", "electric_used")) * Number(getField(bill, "electricRate", "electric_rate"));
@@ -53,7 +52,19 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     .replace(/{{electricCost}}/g, formatMoney(electricCost))
     .replace(/{{total}}/g, formatMoney(getField(bill, "total", "total")))
     .replace(/{{promptpay_qr}}/g, qrBase64 ? `<img src='${qrBase64}' alt='PromptPay QR' style='display:block;margin:12px auto 0;width:160px;height:160px;'>` : "");
-  console.log("DEBUG HTML:", html);
+
+  // สร้างชื่อเดือน/ปี
+  function getMonthYearStr(dateStr: string) {
+    const months = [
+      "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+      "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+    ];
+    const d = new Date(dateStr);
+    return `${months[d.getMonth()]} ${d.getFullYear() + 543}`; // พ.ศ.
+  }
+  const billMonthYear = getMonthYearStr(getField(bill, "billDate", "bill_date") || `${getField(bill, "year", "year")}-${String(getField(bill, "month", "month")).padStart(2, '0')}-01`);
+
+  html = html.replace(/{{billMonthYear}}/g, billMonthYear);
 
   const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();
@@ -62,13 +73,27 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   const billWidth = 360; // ต้องตรงกับ .bill ใน template
   const billHeight = await page.evaluate(() => {
     const el = document.querySelector('.bill');
-    return el ? el.scrollHeight : 600;
+    if (!el) return 600;
+    const rect = el.getBoundingClientRect();
+    return Math.ceil(rect.bottom - rect.top); // ใช้ bounding rect เพื่อรวม footer/margin/padding
   });
+  // ตรวจสอบลิมิตความสูง PDF (puppeteer/chromium ~14400px)
+  if (billHeight > 14400) {
+    await browser.close();
+    throw new Error('เนื้อหาบิลยาวเกินไป (สูงเกิน 14400px) กรุณาปรับ template หรือบีบเนื้อหาให้สั้นลง');
+  }
   await page.setViewport({ width: billWidth, height: billHeight });
   await page.waitForTimeout(500);
   let buffer: Buffer;
   if (format === "pdf") {
-    buffer = await page.pdf({ width: `${billWidth}px`, height: `${billHeight}px`, printBackground: true });
+    buffer = await page.pdf({
+      width: `${billWidth}px`,
+      height: `${billHeight+100}px`,
+      printBackground: true,
+      margin: { top: 0, right: 0, bottom: 0, left: 0 },
+      pageRanges: '1',
+      preferCSSPageSize: false
+    });
   } else {
     buffer = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: billWidth, height: billHeight } });
   }

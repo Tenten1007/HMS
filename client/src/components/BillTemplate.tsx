@@ -42,11 +42,24 @@ const BillTemplate: React.FC<BillTemplateProps> = ({
       qrPayload = "";
     }
   }
-  console.log("promptpayNumber", promptpayNumber, "qrPayload", qrPayload);
+
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto my-4 font-sans text-slate-800 border border-slate-200 max-h-[100vh] overflow-y-auto mt-[150px]">
+    <div className="bg-white rounded-2xl shadow-lg mt-[300px] p-4 sm:p-8 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto my-4 font-sans text-slate-800 border border-slate-200 max-h-[100vh] overflow-y-auto mt-[150px]">
       <div className="text-center mb-4">
         <div className="text-xl font-bold">ใบแจ้งหนี้ค่าห้องพัก</div>
+        {/* เพิ่มรายละเอียดเดือน/ปี */}
+        {billDate && (
+          <div className="text-base text-slate-600 mb-1">
+            ประจำเดือน {(() => {
+              const months = [
+                "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+                "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+              ];
+              const d = new Date(billDate);
+              return `${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+            })()}
+          </div>
+        )}
         <div className="text-sm text-slate-500">(ตัวอย่างบิล)</div>
       </div>
       <div className="mb-2 flex justify-between">
@@ -76,7 +89,7 @@ const BillTemplate: React.FC<BillTemplateProps> = ({
           <div className="text-xs text-slate-500 mt-2">สแกนจ่ายผ่าน PromptPay</div>
         </div>
       )}
-      <div className="text-xs text-slate-400 mt-6 text-center">* กรุณาชำระเงินภายในวันที่ 5 ของเดือนถัดไป</div>
+      <div className="text-xs text-slate-400 mt-6 text-center">* กรุณาชำระเงินก่อนวันที่ 5 ของเดือนถัดไป</div>
     </div>
   );
 };

@@ -31,7 +31,6 @@ export async function uploadToStorage({ buffer, filename }: UploadParams): Promi
       ).end(buffer);
     });
     const directLink = uploadResult.secure_url;
-    console.log('Uploaded to Cloudinary:', directLink);
     return { directLink };
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
