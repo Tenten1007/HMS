@@ -11,6 +11,9 @@
     "build:server": "npx tsc -p server/tsconfig.json",
     "build": "npm run build:server && cd client && npm run build"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
     "@types/pg": "^8.15.4",
