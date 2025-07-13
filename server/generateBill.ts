@@ -20,8 +20,8 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   const waterCost = Number(getField(bill, "waterUsed", "water_used")) * Number(getField(bill, "waterRate", "water_rate"));
   const electricCost = Number(getField(bill, "electricUsed", "electric_used")) * Number(getField(bill, "electricRate", "electric_rate"));
 
-  // Load HTML template
-  const templatePath = path.join(__dirname, "templates", "bill.html");
+  // Load HTML template (always use print template)
+  const templatePath = path.join(__dirname, "templates", "bill_print.html");
   let html = fs.readFileSync(templatePath, "utf8");
 
   // สร้าง QR Code PromptPay (ใช้ require แบบ dynamic)
@@ -58,12 +58,19 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   const browser = await puppeteer.launch({ headless: "new" });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
-  await page.waitForTimeout(1000); // รอให้ render สมบูรณ์
+  // คำนวณขนาด viewport อัตโนมัติจากขนาดเนื้อหา
+  const billWidth = 360; // ต้องตรงกับ .bill ใน template
+  const billHeight = await page.evaluate(() => {
+    const el = document.querySelector('.bill');
+    return el ? el.scrollHeight : 600;
+  });
+  await page.setViewport({ width: billWidth, height: billHeight });
+  await page.waitForTimeout(500);
   let buffer: Buffer;
   if (format === "pdf") {
-    buffer = await page.pdf({ format: "A5", printBackground: true });
+    buffer = await page.pdf({ width: `${billWidth}px`, height: `${billHeight}px`, printBackground: true });
   } else {
-    buffer = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: 1024, height: 1024 } });
+    buffer = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: billWidth, height: billHeight } });
   }
   await browser.close();
   return buffer;

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=400, initial-scale=1.0" />
+  <title>ใบแจ้งหนี้ค่าห้องพัก</title>
+  <style>
+    body {
+      font-family: 'Sarabun', Arial, sans-serif;
+      color: #222;
+      background: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    .bill {
+      width: 360px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px 16px;
+      box-sizing: border-box;
+    }
+    .bill-title {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #111;
+    }
+    .bill-section {
+      margin-bottom: 12px;
+    }
+    .bill-label {
+      color: #222;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    .bill-value {
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #111;
+    }
+    .bill-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      padding-top: 12px;
+    }
+    .bill-total .amount {
+      color: #16a34a;
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+    .bill-footer {
+      text-align: center;
+      color: #888;
+      font-size: 0.85rem;
+      margin-top: 24px;
+    }
+    .qr {
+      text-align: center;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bill">
+    <div class="bill-title">ใบแจ้งหนี้ค่าห้องพัก</div>
+    <div class="bill-section">
+      <span class="bill-label">ห้อง:</span> <span class="bill-value">{{roomName}}</span>
+    </div>
+    <div class="bill-section">
+      <span class="bill-label">ค่าห้อง:</span> <span class="bill-value">{{roomRate}} บาท</span>
+    </div>
+    <div class="bill-section">
+      <span class="bill-label">เลขมิเตอร์น้ำ เดือนที่แล้ว:</span> <span class="bill-value">{{waterPrev}}</span><br />
+      <span class="bill-label">เลขมิเตอร์น้ำ เดือนนี้:</span> <span class="bill-value">{{waterCurr}}</span><br />
+      <span class="bill-label">หน่วยน้ำที่ใช้:</span> <span class="bill-value">{{waterUsed}}</span> หน่วย<br />
+      <span class="bill-label">ค่าน้ำ:</span> <span class="bill-value">{{waterUsed}} x {{waterRate}} = {{waterCost}} บาท</span>
+    </div>
+    <div class="bill-section">
+      <span class="bill-label">เลขมิเตอร์ไฟ เดือนที่แล้ว:</span> <span class="bill-value">{{electricPrev}}</span><br />
+      <span class="bill-label">เลขมิเตอร์ไฟ เดือนนี้:</span> <span class="bill-value">{{electricCurr}}</span><br />
+      <span class="bill-label">หน่วยไฟที่ใช้:</span> <span class="bill-value">{{electricUsed}}</span> หน่วย<br />
+      <span class="bill-label">ค่าไฟ:</span> <span class="bill-value">{{electricUsed}} x {{electricRate}} = {{electricCost}} บาท</span>
+    </div>
+    <div class="bill-total">
+      <span>รวมทั้งสิ้น</span>
+      <span class="amount">{{total}} บาท</span>
+    </div>
+    <div class="qr">{{promptpay_qr}}</div>
+    <div class="bill-footer">* กรุณาชำระเงินก่อนวันที่ 5 ของเดือนถัดไป</div>
+  </div>
+</body>
+</html> 
