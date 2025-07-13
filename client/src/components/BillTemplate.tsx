@@ -86,8 +86,8 @@ const BillTemplate: React.FC<BillTemplateProps> = ({
       </div>
       <div className="flex flex-col gap-1 mt-6">
         <div className="flex justify-between items-center">
-          <span className="font-bold text-lg">รวมทั้งสิ้น</span>
-          <span className="text-2xl font-bold text-green-600">{total.toLocaleString()} บาท</span>
+        <span className="font-bold text-lg">รวมทั้งสิ้น</span>
+        <span className="text-2xl font-bold text-green-600">{total.toLocaleString()} บาท</span>
         </div>
         {paidAmount !== undefined && paidAmount > 0 && paidAmount < total && (
           <div className="flex justify-between items-center">

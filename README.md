@@ -1,56 +1,86 @@
-# HMS (Hotel Management System)
+# HMS Production Deployment Guide
 
-ระบบจัดการโรงแรมที่พัฒนาด้วย React + TypeScript (Frontend) และ Node.js + Express (Backend)
+## 1. Requirements
+- Node.js (v18+)
+- npm (v9+)
+- PostgreSQL Database
+- Cloudinary, Google Cloud Service Account, LINE API (ถ้าใช้)
 
-## ฟีเจอร์หลัก
-
-- **จัดการห้องพัก**: เพิ่ม/แก้ไข/ลบข้อมูลห้องพัก
-- **ระบบคิดค่าน้ำค่าไฟ**: สร้างบิลและคำนวณค่าน้ำค่าไฟ
-- **บันทึกบิลลงฐานข้อมูล**: เก็บประวัติบิลทั้งหมด
-- **ตรวจสอบสถานะการจ่ายเงิน**: ดูและอัปเดตสถานะการจ่ายเงินของแต่ละห้อง
-- **ดาวน์โหลดบิล**: ส่งออกเป็น PDF หรือ PNG
-- **ตั้งค่าหน่วยน้ำ-ไฟ**: ปรับอัตราค่าน้ำค่าไฟได้
-
-## การติดตั้ง
-
-### 1. ติดตั้ง Dependencies ทั้งหมด
-```bash
-npm run install:all
+## 2. Installation
+```sh
+git clone <YOUR_REPO_URL>
+cd HMS
+npm install
+cd client && npm install && cd ..
 ```
 
-### 2. รันทั้ง Frontend และ Backend พร้อมกัน
-```bash
-npm run dev:all
+## 3. Environment Variables
+สร้างไฟล์ `.env` ที่ root และ/หรือใน server directory (ดูตัวอย่างด้านล่าง)
+
+### ตัวอย่าง .env
+```
+# Database
+PGUSER=postgres
+PGHOST=localhost
+PGDATABASE=hms
+PGPASSWORD=yourpassword
+PGPORT=5432
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Google Cloud Service Account
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account.json
+
+# LINE API
+LINE_CHANNEL_ACCESS_TOKEN=your_line_token
+LINE_GROUP_ID=your_line_group_id
+
+# Server
+PORT=4000
 ```
 
-## คำสั่งที่มีให้
+**หมายเหตุ:**
+- ห้าม commit ไฟล์ .env หรือ service-account.json ลง git repo
+- ควรเก็บ service-account.json ไว้ใน server ที่ปลอดภัยเท่านั้น
 
-- `npm run install:all` - ติดตั้ง dependencies ทั้ง frontend และ backend
-- `npm run dev` - รันทั้ง frontend และ backend พร้อมกัน
-- `npm run dev:server` - รันเฉพาะ backend
-- `npm run start` - รัน backend ในโหมด production
-- `npm run build` - build frontend สำหรับ production
-
-## โครงสร้างโปรเจค
-
+## 4. Build Production
+```sh
+npm run build
 ```
-HMS/
-├── client/          # Frontend (React + TypeScript + Vite)
-├── server/          # Backend (Node.js + Express + TypeScript)
-├── package.json     # Root package.json สำหรับรันคำสั่งรวม
-└── README.md        # ไฟล์นี้
+- จะ build ทั้ง server (TypeScript → JS) และ client (Vite)
+
+## 5. Start Production Server
+```sh
+npm run start
 ```
+- Server จะรันที่ PORT ที่กำหนด (default: 4000)
+- Client static files อยู่ใน `client/dist` (ถ้าต้องการ serve ด้วย nginx หรือ static hosting)
 
-## การเข้าถึง
+## 6. Deploy Suggestion
+- ใช้ pm2, Docker, หรือ cloud platform (เช่น GCP, AWS, Azure) สำหรับ production
+- ตัวอย่าง pm2:
+  ```sh
+  pm2 start npm --name hms-backend -- run start
+  ```
+- ตรวจสอบ log และ health check เสมอ
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:3000
+## 7. Database
+- ตรวจสอบ schema และ seed ข้อมูลใน db/ (เช่น seed.db)
+- ใช้ pgAdmin หรือ psql สำหรับ import/export
 
-## การพัฒนา
+## 8. Security
+- ห้าม commit secret, key, หรือ .env ลง git
+- เปลี่ยน key/service account ใหม่ทันทีหากรั่วไหล
 
-### รันแยกกัน
-- Frontend: `cd client && npm run dev`
-- Backend: `npm run dev:server`
+## 9. Troubleshooting
+- ตรวจสอบ log server และ client
+- ตรวจสอบว่า env ครบถ้วนและถูกต้อง
+- ตรวจสอบว่า build สำเร็จและไฟล์ dist ถูกสร้าง
 
-### รันพร้อมกัน
-- ทั้งคู่: `npm run dev` 
+---
+
+**Contact:**
+- ผู้ดูแลระบบ/DevOps/ผู้พัฒนา 
