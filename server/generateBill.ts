@@ -71,7 +71,7 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
 
   html = html.replace(/{{billMonthYear}}/g, billMonthYear);
 
-  const browser = await puppeteer.launch({ headless: "new" });
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });
   // คำนวณขนาด viewport อัตโนมัติจากขนาดเนื้อหา
@@ -88,10 +88,10 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     throw new Error('เนื้อหาบิลยาวเกินไป (สูงเกิน 14400px) กรุณาปรับ template หรือบีบเนื้อหาให้สั้นลง');
   }
   await page.setViewport({ width: billWidth, height: billHeight });
-  await page.waitForTimeout(500);
+  await new Promise(res => setTimeout(res, 500));
   let buffer: Buffer;
   if (format === "pdf") {
-    buffer = await page.pdf({
+    const pdfUint8 = await page.pdf({
       width: `${billWidth}px`,
       height: `${billHeight+100}px`,
       printBackground: true,
@@ -99,8 +99,10 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
       pageRanges: '1',
       preferCSSPageSize: false
     });
+    buffer = Buffer.from(pdfUint8);
   } else {
-    buffer = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: billWidth, height: billHeight } });
+    const pngUint8 = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: billWidth, height: billHeight } });
+    buffer = Buffer.from(pngUint8);
   }
   await browser.close();
   return buffer;
