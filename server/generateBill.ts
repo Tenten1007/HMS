@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import puppeteer from "puppeteer";
-const __dirname = path.dirname(__filename);
 
 function formatMoney(num: number | string) {
   return Number(num).toLocaleString("en-US");

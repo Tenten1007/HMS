@@ -10,8 +10,6 @@ import paymentsRouter from "./routes/payments";
 import tenantsRouter from "./routes/tenants";
 import lineRouter from "./routes/line";
 
-const __dirname = path.dirname(__filename);
-
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
