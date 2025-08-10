@@ -3,15 +3,13 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-import { generateBill } from "./generateBill.js";
-import roomsRouter from "./routes/rooms.js";
-import billsRouter from "./routes/bills.js";
-import paymentsRouter from "./routes/payments.js";
-import tenantsRouter from "./routes/tenants.js";
-import lineRouter from "./routes/line.js";
+import { generateBill } from "./generateBill";
+import roomsRouter from "./routes/rooms";
+import billsRouter from "./routes/bills";
+import paymentsRouter from "./routes/payments";
+import tenantsRouter from "./routes/tenants";
+import lineRouter from "./routes/line";
 
-const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();

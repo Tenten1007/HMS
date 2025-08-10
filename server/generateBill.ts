@@ -30,10 +30,10 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   }
   let qrBase64 = "";
   try {
-    const promptpay = (await import('promptpay-qr')).default;
-    const QRCode = await import('qrcode');
+    const promptpay = require('promptpay-qr');
+    const QRCode = require('qrcode');
     const payload = promptpay(promptpayNumber, { amount });
-    qrBase64 = await QRCode.default.toDataURL(payload, { margin: 1, width: 160 });
+    qrBase64 = await QRCode.toDataURL(payload, { margin: 1, width: 160 });
   } catch (e) {
     console.error("QR ERROR", e);
     qrBase64 = "";
