@@ -12,7 +12,8 @@
       "Bash(git commit:*)",
       "Bash(cp:*)",
       "Bash(rm:*)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(npm run build:server:*)"
     ],
     "deny": []
   }
