@@ -1,36 +1,22 @@
-import express, { Request, Response } from "express";
-import bodyParser from "body-parser";
-import cors from "cors";
+import Fastify from "fastify";
+import cors from "@fastify/cors";
 import fs from "fs";
 import path from "path";
 import { generateBill } from "./generateBill";
-import roomsRouter from "./routes/rooms";
-import billsRouter from "./routes/bills";
-import paymentsRouter from "./routes/payments";
-import tenantsRouter from "./routes/tenants";
-import lineRouter from "./routes/line";
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-app.use("/api/rooms", roomsRouter);
-app.use("/api/bills", billsRouter);
-app.use("/api/payments", paymentsRouter);
-app.use("/api/tenants", tenantsRouter);
-app.use("/api", lineRouter);
-app.use('/bills', express.static(path.join(__dirname, 'public/bills')));
+const fastify = Fastify({ logger: true });
 
-// เพิ่ม middleware เพื่อ expose header
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
-  next();
+// Register CORS
+fastify.register(cors, {
+  origin: true
 });
 
-// Endpoint: POST /api/generate-bill
-// body: { ...billData, format: "pdf" | "png" }
-app.post("/api/generate-bill", async (req: Request, res: Response) => {
-  const { bill, format = "pdf" } = req.body;
-  if (!bill) return res.status(400).json({ error: "Missing bill data" });
+// Generate bill endpoint
+fastify.post("/api/generate-bill", async (request, reply) => {
+  const { bill, format = "pdf" } = request.body as any;
+  if (!bill) {
+    return reply.status(400).send({ error: "Missing bill data" });
+  }
 
   try {
     const buffer = await generateBill(bill, format);
@@ -42,7 +28,7 @@ app.post("/api/generate-bill", async (req: Request, res: Response) => {
       ][month - 1] || "";
     }
     const rawRoom = bill.roomName || bill.room_name || bill.roomId || bill.room_id || "Room";
-    const safeRoom = String(rawRoom).replace(/[^a-zA-Z0-9_-]/g, "_"); // แทนที่อักขระพิเศษ/ไทย/ช่องว่างด้วย _
+    const safeRoom = String(rawRoom).replace(/[^a-zA-Z0-9_-]/g, "_");
     const month = bill.month || (bill.billDate ? (new Date(bill.billDate).getMonth() + 1) : undefined);
     const year = bill.year || (bill.billDate ? (new Date(bill.billDate).getFullYear()) : undefined);
     const yearBE = year ? (Number(year) + 543) : "";
@@ -50,19 +36,28 @@ app.post("/api/generate-bill", async (req: Request, res: Response) => {
     const fileBase = `Bill_${safeRoom}_${monthName}_${yearBE}`;
     const ext = format === "pdf" ? ".pdf" : ".png";
     const filename = `${fileBase}${ext}`;
+    
     if (format === "pdf") {
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      reply.type("application/pdf");
+      reply.header("Content-Disposition", `attachment; filename="${filename}"`);
     } else {
-      res.setHeader("Content-Type", "image/png");
-      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      reply.type("image/png");  
+      reply.header("Content-Disposition", `attachment; filename="${filename}"`);
     }
-    res.send(buffer);
+    reply.header("Access-Control-Expose-Headers", "Content-Disposition");
+    return reply.send(buffer);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || "Failed to generate bill" });
+    return reply.status(500).send({ error: err.message || "Failed to generate bill" });
   }
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-}); 
+const PORT = Number(process.env.PORT) || 4000;
+const start = async () => {
+  try {
+    await fastify.listen({ port: PORT, host: '0.0.0.0' });
+  } catch (err) {
+    fastify.log.error(err);
+    process.exit(1);
+  }
+}
+start(); 
