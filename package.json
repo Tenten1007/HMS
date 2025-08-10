@@ -2,7 +2,6 @@
   "name": "hms-backend",
   "version": "1.0.0",
   "main": "server/index.js",
-  "type": "module",
   "scripts": {
     "start": "node server/dist/index.js",
     "dev:server": "nodemon --watch ./server --ext ts --exec \"./node_modules/.bin/tsx server/index.ts\"",
