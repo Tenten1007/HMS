@@ -31,7 +31,7 @@ const Navbar = () => {
       {/* Desktop nav */}
       <div className="hidden md:flex gap-4 md:gap-8 items-center">
         <div className="flex items-center gap-2 mr-8">
-          <img src="/dist/assets/logo.jpg" alt="HMS Logo" className="w-10 h-10 rounded-lg object-cover" />
+          <img src="/logo.jpg" alt="HMS Logo" className="w-10 h-10 rounded-lg object-cover" />
           <span className="font-bold text-blue-700 text-xl drop-shadow">HMS</span>
         </div>
         {navs.map((nav) => (
@@ -47,7 +47,7 @@ const Navbar = () => {
       {/* Mobile hamburger */}
       <div className="flex md:hidden w-full justify-between items-center px-4">
         <div className="flex items-center gap-2">
-          <img src="/dist/assets/logo.jpg" alt="HMS Logo" className="w-8 h-8 rounded-lg object-cover" />
+          <img src="/logo.jpg" alt="HMS Logo" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-bold text-blue-700 text-lg drop-shadow">HMS</span>
         </div>
         <button
@@ -87,7 +87,7 @@ const Navbar = () => {
             >
               <div className="flex items-center justify-between px-6 pt-5 pb-2">
                 <div className="flex items-center gap-2">
-                  <img src="/dist/assets/logo.jpg" alt="HMS Logo" className="w-8 h-8 rounded-lg object-cover" />
+                  <img src="/logo.jpg" alt="HMS Logo" className="w-8 h-8 rounded-lg object-cover" />
                   <span className="font-extrabold text-xl text-white tracking-wide drop-shadow">HMS</span>
                 </div>
                 <motion.button
