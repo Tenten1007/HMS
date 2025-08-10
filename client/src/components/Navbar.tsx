@@ -29,7 +29,11 @@ const Navbar = () => {
   return (
     <nav className="glass-header fixed top-0 left-0 w-full z-20 flex items-center justify-center h-16 shadow-md">
       {/* Desktop nav */}
-      <div className="hidden md:flex gap-4 md:gap-8">
+      <div className="hidden md:flex gap-4 md:gap-8 items-center">
+        <div className="flex items-center gap-2 mr-8">
+          <img src="/dist/assets/logo.jpg" alt="HMS Logo" className="w-10 h-10 rounded-lg object-cover" />
+          <span className="font-bold text-blue-700 text-xl drop-shadow">HMS</span>
+        </div>
         {navs.map((nav) => (
           <Link
             key={nav.path}
@@ -42,7 +46,10 @@ const Navbar = () => {
       </div>
       {/* Mobile hamburger */}
       <div className="flex md:hidden w-full justify-between items-center px-4">
-        <span className="font-bold text-blue-700 text-lg drop-shadow">HMS</span>
+        <div className="flex items-center gap-2">
+          <img src="/dist/assets/logo.jpg" alt="HMS Logo" className="w-8 h-8 rounded-lg object-cover" />
+          <span className="font-bold text-blue-700 text-lg drop-shadow">HMS</span>
+        </div>
         <button
           className="p-2 rounded-lg bg-white/40 hover:bg-white/70 shadow-md focus:outline-none"
           onClick={() => setOpen((v) => !v)}
@@ -79,7 +86,10 @@ const Navbar = () => {
               tabIndex={0}
             >
               <div className="flex items-center justify-between px-6 pt-5 pb-2">
-                <span className="font-extrabold text-xl text-white tracking-wide drop-shadow">HMS</span>
+                <div className="flex items-center gap-2">
+                  <img src="/dist/assets/logo.jpg" alt="HMS Logo" className="w-8 h-8 rounded-lg object-cover" />
+                  <span className="font-extrabold text-xl text-white tracking-wide drop-shadow">HMS</span>
+                </div>
                 <motion.button
                   whileTap={{ scale: 0.85, rotate: 90 }}
                   whileHover={{ scale: 1.1 }}

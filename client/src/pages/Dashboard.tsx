@@ -2,10 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Building2, Users, Banknote, Zap, Droplets } from 'lucide-react';
 import { useRoomData } from '../hooks/useRoomData';
+import { LoadingCard, ErrorDisplay } from '../components/ui';
 import React from 'react';
 
 const Dashboard = () => {
-  const { rooms, bills, getOccupiedRooms, loading } = useRoomData();
+  const { rooms, bills, getOccupiedRooms, loading, error, refetch } = useRoomData();
 
   // รายได้รวม (เฉพาะบิลที่จ่ายแล้ว)
   const totalRevenue = bills
@@ -16,7 +17,19 @@ const Dashboard = () => {
   const occupancyRate = rooms.length > 0 ? (occupiedRooms / rooms.length) * 100 : 0;
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">กำลังโหลดข้อมูล...</div>;
+    return <LoadingCard text="กำลังโหลดข้อมูล Dashboard..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <ErrorDisplay 
+          error={error}
+          title="ไม่สามารถโหลดข้อมูล Dashboard ได้"
+          onRetry={refetch}
+        />
+      </div>
+    );
   }
 
   return (

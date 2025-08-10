@@ -5,14 +5,30 @@ export const useRoomData = () => {
   const [rooms, setRooms] = useState([]);
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async () => {
+    try {
       setLoading(true);
+      setError(null);
+      
       // ดึงข้อมูลห้องและบิลทั้งหมด
+      const [roomsResponse, billsResponse] = await Promise.all([
+        fetch('http://localhost:4000/api/rooms'),
+        fetch('http://localhost:4000/api/bills')
+      ]);
+
+      if (!roomsResponse.ok) {
+        throw new Error(`ไม่สามารถโหลดข้อมูลห้องได้: ${roomsResponse.status}`);
+      }
+      
+      if (!billsResponse.ok) {
+        throw new Error(`ไม่สามารถโหลดข้อมูลบิลได้: ${billsResponse.status}`);
+      }
+
       const [roomsRes, billsRes] = await Promise.all([
-        fetch('http://localhost:4000/api/rooms').then(res => res.json()),
-        fetch('http://localhost:4000/api/bills').then(res => res.json())
+        roomsResponse.json(),
+        billsResponse.json()
       ]);
       setBills(billsRes);
       // หา bill ล่าสุดของแต่ละห้อง (ตาม year, month มากสุด)
@@ -55,7 +71,14 @@ export const useRoomData = () => {
       });
       setRooms(mapped);
       setLoading(false);
-    };
+    } catch (err) {
+      console.error('Error fetching room data:', err);
+      setError(err.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -82,6 +105,8 @@ export const useRoomData = () => {
     updateRoom,
     getTotalRevenue,
     getOccupiedRooms,
-    loading
+    loading,
+    error,
+    refetch: fetchData
   };
 };

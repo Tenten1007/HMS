@@ -1,4 +1,44 @@
+# Environment variables
 .env
+.env.local
+.env.production
+
+# Database files
 .db
+*.sqlite
+*.sqlite3
+
+# Google Cloud credentials
 server/ivory-signer-465805-e5-487054ab50fe.json
-".env"  
+
+# Node modules
+node_modules/
+*/node_modules/
+client/node_modules/
+server/node_modules/
+
+# Build output
+dist/
+build/
+client/dist/
+server/dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
