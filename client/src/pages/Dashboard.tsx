@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Building2, Users, Banknote, Zap, Droplets } from 'lucide-react';
-import { useRoomData } from '../hooks/useRoomData';
-import { LoadingCard, ErrorDisplay } from '../components/ui';
+import { useRoomData } from '@/hooks/useRoomData';
+import { LoadingCard, ErrorDisplay } from '@/components/ui';
 import React from 'react';
 
 const Dashboard = () => {
