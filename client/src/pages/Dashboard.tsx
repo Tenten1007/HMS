@@ -2,8 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Badge } from '../components/ui/badge';
 import { Building2, Users, Banknote, Zap, Droplets } from 'lucide-react';
 import { useRoomData } from '../hooks/useRoomData';
-import { LoadingCard } from '../components/ui/loading';
-import { ErrorDisplay } from '../components/ui/error-display';
+import { LoadingCard, ErrorDisplay } from '../components/ui/index';
 import React from 'react';
 
 const Dashboard = () => {
