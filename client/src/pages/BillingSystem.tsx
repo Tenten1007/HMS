@@ -37,14 +37,14 @@ const BillingSystem: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/rooms")
+    fetch("http://hms-backend-zx75.onrender.com/api/rooms")
       .then(res => res.json())
       .then(data => {
         const activeRooms = data.filter((room: any) => room.isActive);
         setRoomOptions(activeRooms.map((room: any) => ({ value: room.ชื่อ, label: room.ชื่อ, id: room.id })));
       });
     // ดึงบิลทั้งหมดมาเก็บไว้
-    fetch("http://localhost:4000/api/bills")
+    fetch("http://hms-backend-zx75.onrender.com/api/bills")
       .then(res => res.json())
       .then(data => setAllBills(data));
   }, []);
@@ -101,7 +101,7 @@ const BillingSystem: React.FC = () => {
     };
 
     try {
-      const res = await fetch("http://localhost:4000/api/bills", {
+      const res = await fetch("http://hms-backend-zx75.onrender.com/api/bills", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(billData),
@@ -144,7 +144,7 @@ const BillingSystem: React.FC = () => {
       electricRate,
       total: waterUsed * waterRate + electricUsed * electricRate + form.roomRate,
     };
-    const res = await fetch("http://localhost:4000/api/generate-bill", {
+    const res = await fetch("http://hms-backend-zx75.onrender.com/api/generate-bill", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bill, format }),

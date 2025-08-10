@@ -14,8 +14,8 @@ export const useRoomData = () => {
       
       // ดึงข้อมูลห้องและบิลทั้งหมด
       const [roomsResponse, billsResponse] = await Promise.all([
-        fetch('http://localhost:4000/api/rooms'),
-        fetch('http://localhost:4000/api/bills')
+        fetch('https://hms-backend-zx75.onrender.com/api/rooms'),
+        fetch('https://hms-backend-zx75.onrender.com/api/bills')
       ]);
 
       if (!roomsResponse.ok) {
