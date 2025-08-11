@@ -1,26 +1,23 @@
 # Dockerfile for HMS server (Express/TypeScript)
 FROM node:20-slim
 
-# Install Chrome and dependencies
-ENV CHROME_BIN=/usr/bin/google-chrome-stable
+# Install Chromium and dependencies
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV CHROME_BIN=/usr/bin/chromium
 
 RUN apt-get update \
-    && apt-get install -y wget gnupg2 \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
     && apt-get install -y \
-    google-chrome-stable \
+    chromium \
     fonts-liberation \
     fonts-thai-tlwg \
     xvfb \
-    && google-chrome --version \
+    && chromium --version \
     && rm -rf /var/lib/apt/lists/*
 
-# Add Chrome as a user
-RUN groupadd -r chrome && useradd -r -g chrome -G audio,video chrome \
-    && mkdir -p /home/chrome/Downloads \
-    && chown -R chrome:chrome /home/chrome
+# Add chrome user
+RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
+    && mkdir -p /home/pptruser/Downloads \
+    && chown -R pptruser:pptruser /home/pptruser
 
 WORKDIR /app
 
@@ -31,8 +28,10 @@ COPY . .
 
 RUN npm run build
 
-# Switch to chrome user
-USER chrome
+# Switch to pptruser
+USER pptruser
 
 EXPOSE 3001
+
+ENV NODE_ENV=production
 CMD ["node", "dist/index.js"] 

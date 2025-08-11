@@ -113,24 +113,33 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   let browser = null;
   try {
     console.log('Launching browser...');
-    console.log('Chrome path:', process.env.CHROME_BIN || '/usr/bin/google-chrome-stable');
+    console.log('Chromium path:', process.env.CHROME_BIN || '/usr/bin/chromium');
     
-    // Check if Chrome exists
+    // Check if Chromium exists
     try {
       const { execSync } = require('child_process');
-      const chromeVersion = execSync('google-chrome --version').toString();
-      console.log('Chrome version:', chromeVersion);
+      const chromeVersion = execSync('chromium --version').toString();
+      console.log('Chromium version:', chromeVersion);
     } catch (error) {
-      console.error('Error checking Chrome version:', error);
+      console.error('Error checking Chromium version:', error);
     }
     
     browser = await Promise.race([
       puppeteer.launch({ 
         headless: 'new',
-        executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome-stable',
+        executablePath: process.env.CHROME_BIN || '/usr/bin/chromium',
         timeout: 30000, // 30 seconds timeout
         protocolTimeout: 30000,
-        product: 'chrome',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions'
+        ],
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox', 
