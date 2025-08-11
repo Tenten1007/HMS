@@ -155,22 +155,17 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
         dumpio: true, // Log browser process stdout and stderr
         headless: 'new',
         executablePath: chromiumPath,
-        timeout: 60000, // 60 seconds timeout
-        protocolTimeout: 60000,
-        ignoreHTTPSErrors: true,
-        env: {
-          ...process.env,
-          DISPLAY: ':99',
-          XVFB_WHD: '1280x720x16',
-          LANG: 'en_US.UTF-8'
-        },
         args: [
           '--no-sandbox',
-          '--disable-setuid-sandbox', 
+          '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--disable-extensions',
           '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-extensions',
+          '--disable-dbus',
+          '--window-size=1280,720',
           '--disable-default-apps',
           '--disable-sync',
           '--disable-web-security',
@@ -184,8 +179,6 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
           '--disable-ipc-flooding-protection',
           '--disable-popup-blocking',
           '--disable-translate',
-          '--single-process',
-          '--no-zygote',
           '--no-default-browser-check',
           '--disable-crash-reporter',
           '--disable-in-process-stack-traces',
@@ -203,7 +196,16 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
           '--disable-2d-canvas-clip-aa',
           '--disable-gl-drawing-for-tests',
           '--enable-low-end-device-mode'
-        ]
+        ],
+        timeout: 30000, // 30 seconds timeout
+        protocolTimeout: 30000,
+        ignoreHTTPSErrors: true,
+        env: {
+          ...process.env,
+          DISPLAY: ':99',
+          XVFB_WHD: '1280x720x16',
+          LANG: 'en_US.UTF-8'
+        }
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 50000)) // 50 seconds
     ]);
