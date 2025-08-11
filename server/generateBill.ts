@@ -7,7 +7,7 @@ try {
   puppeteer = require("puppeteer");
   console.log("Puppeteer loaded successfully");
 } catch (error) {
-  console.error("Puppeteer import error:", error.message);
+  console.error("Puppeteer import error:", error instanceof Error ? error.message : String(error));
   puppeteer = null;
 }
 
