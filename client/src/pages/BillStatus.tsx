@@ -3,6 +3,7 @@ import { FaCheckCircle, FaClock, FaMoneyCheckAlt, FaPaperclip, FaEdit, FaTrash, 
 import BillTemplate from "../components/BillTemplate";
 import { useIsMobile } from "../hooks/use-mobile";
 import { useOrientation } from "../hooks/useOrientation";
+import { API_BASE_URL } from "../hooks/useApi";
 
 interface Bill {
   id: number;
@@ -53,7 +54,7 @@ const BillStatus: React.FC = () => {
 
   const fetchBills = async () => {
     try {
-      const res = await fetch("http://hms-backend-zx75.onrender.com/api/bills");
+      const res = await fetch(`${API_BASE_URL}/api/bills`);
       const data = await res.json();
       setBills(data);
 
@@ -83,7 +84,7 @@ const BillStatus: React.FC = () => {
 
   const fetchRooms = async () => {
     try {
-      const res = await fetch("http://hms-backend-zx75.onrender.com/api/rooms");
+      const res = await fetch(`${API_BASE_URL}/api/rooms`);
       const data = await res.json();
       setRooms(data);
     } catch (error) {
@@ -95,7 +96,7 @@ const BillStatus: React.FC = () => {
 
   const updateBillStatus = async (billId: number, status: "unpaid" | "paid" | "partial") => {
     try {
-      const res = await fetch(`http://hms-backend-zx75.onrender.com/api/bills/${billId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/bills/${billId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
@@ -117,7 +118,7 @@ const BillStatus: React.FC = () => {
     }
 
     try {
-      const res = await fetch(`http://hms-backend-zx75.onrender.com/api/bills/${billId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/bills/${billId}`, {
         method: "DELETE",
       });
       
@@ -147,7 +148,7 @@ const BillStatus: React.FC = () => {
     if (!editingBill) return;
 
     try {
-      const res = await fetch(`http://hms-backend-zx75.onrender.com/api/bills/${editingBill.id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/bills/${editingBill.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...updatedBill, paidAmount: editingBill.paidAmount ?? 0 }),
@@ -197,7 +198,7 @@ const BillStatus: React.FC = () => {
     };
 
     try {
-      const res = await fetch("http://hms-backend-zx75.onrender.com/api/generate-bill", {
+      const res = await fetch(`${API_BASE_URL}/api/generate-bill`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bill, format }),
@@ -267,7 +268,7 @@ const BillStatus: React.FC = () => {
     if (!window.confirm("ยืนยันส่งบิลเข้าไลน์กลุ่มสำหรับเดือน/ปีนี้?")) return;
     try {
       const [month, year] = selectedMonthYear.split("/");
-      const res = await fetch("http://hms-backend-zx75.onrender.com/api/send-bills-to-line", {
+      const res = await fetch(`${API_BASE_URL}/api/send-bills-to-line`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ month, year })

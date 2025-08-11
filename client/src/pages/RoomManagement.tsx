@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GlassCard from "../components/GlassCard";
+import { API_BASE_URL } from "../hooks/useApi";
 
 const emptyTenant = {
   name: "",
@@ -64,8 +65,8 @@ const RoomManagement: React.FC = () => {
   // ดึงข้อมูลห้องพักจาก backend จริง
   useEffect(() => {
     Promise.all([
-      fetch("http://hms-backend-zx75.onrender.com/api/rooms").then(res => res.json()),
-      fetch("http://hms-backend-zx75.onrender.com/api/tenants").then(res => res.json())
+      fetch(`${API_BASE_URL}/api/rooms`).then(res => res.json()),
+      fetch(`${API_BASE_URL}/api/tenants`).then(res => res.json())
     ]).then(([roomsData, tenantsData]) => {
       console.log("roomsData", roomsData);
       console.log("tenantsData", tenantsData);
@@ -137,7 +138,7 @@ const RoomManagement: React.FC = () => {
   const handleSaveTenant = async () => {
     if (!selectedRoom) return;
     if (editMode === "add") {
-      await fetch("http://hms-backend-zx75.onrender.com/api/tenants", {
+      await fetch(`${API_BASE_URL}/api/tenants`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -150,7 +151,7 @@ const RoomManagement: React.FC = () => {
         })
       });
     } else if (editMode === "edit" && selectedRoom.tenant) {
-      await fetch(`http://hms-backend-zx75.onrender.com/api/tenants/${selectedRoom.tenant.id}`, {
+      await fetch(`http://${API_BASE_URL}/api/tenants/${selectedRoom.tenant.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -164,8 +165,8 @@ const RoomManagement: React.FC = () => {
     }
     // ดึงข้อมูลใหม่จาก backend แล้ว setRooms/setEditMode/setSelectedRoom แทน reload
     const [roomsData, tenantsData] = await Promise.all([
-      fetch("http://hms-backend-zx75.onrender.com/api/rooms").then(res => res.json()),
-      fetch("http://hms-backend-zx75.onrender.com/api/tenants").then(res => res.json())
+      fetch(`${API_BASE_URL}/api/rooms`).then(res => res.json()),
+      fetch(`${API_BASE_URL}/api/tenants`).then(res => res.json())
     ]);
     // mapping logic เดิม
     function isActiveTenant(tenant) {
@@ -199,13 +200,13 @@ const RoomManagement: React.FC = () => {
   // ลบผู้เช่า
   const handleDeleteTenant = async (room, tenant) => {
     if (!room || !tenant) return;
-    await fetch(`http://hms-backend-zx75.onrender.com/api/tenants/${tenant.id}`, {
+    await fetch(`http://${API_BASE_URL}/api/tenants/${tenant.id}`, {
       method: "DELETE"
     });
     // ดึงข้อมูลใหม่จาก backend แล้ว setRooms/setEditMode/setSelectedRoom
     const [roomsData, tenantsData] = await Promise.all([
-      fetch("http://hms-backend-zx75.onrender.com/api/rooms").then(res => res.json()),
-      fetch("http://hms-backend-zx75.onrender.com/api/tenants").then(res => res.json())
+      fetch(`${API_BASE_URL}/api/rooms`).then(res => res.json()),
+      fetch(`${API_BASE_URL}/api/tenants`).then(res => res.json())
     ]);
     function isActiveTenant(tenant) {
       const today = new Date();

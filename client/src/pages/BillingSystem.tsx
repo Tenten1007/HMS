@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import GlassCard from "../components/GlassCard";
 import BillTemplate from "../components/BillTemplate";
+import { API_BASE_URL } from "../hooks/useApi";
 
 const getRate = (key: string, fallback: number) => Number(localStorage.getItem(key)) || fallback;
 
@@ -37,14 +38,14 @@ const BillingSystem: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    fetch("http://hms-backend-zx75.onrender.com/api/rooms")
+    fetch(`${API_BASE_URL}/api/rooms`)
       .then(res => res.json())
       .then(data => {
         const activeRooms = data.filter((room: any) => room.isActive);
         setRoomOptions(activeRooms.map((room: any) => ({ value: room.ชื่อ, label: room.ชื่อ, id: room.id })));
       });
     // ดึงบิลทั้งหมดมาเก็บไว้
-    fetch("http://hms-backend-zx75.onrender.com/api/bills")
+    fetch(`${API_BASE_URL}/api/bills`)
       .then(res => res.json())
       .then(data => setAllBills(data));
   }, []);
@@ -101,7 +102,7 @@ const BillingSystem: React.FC = () => {
     };
 
     try {
-      const res = await fetch("http://hms-backend-zx75.onrender.com/api/bills", {
+      const res = await fetch(`${API_BASE_URL}/api/bills`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(billData),
@@ -144,7 +145,7 @@ const BillingSystem: React.FC = () => {
       electricRate,
       total: waterUsed * waterRate + electricUsed * electricRate + form.roomRate,
     };
-    const res = await fetch("http://hms-backend-zx75.onrender.com/api/generate-bill", {
+    const res = await fetch(`${API_BASE_URL}/api/generate-bill`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bill, format }),

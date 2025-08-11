@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from './useApi';
 
 export const useRoomData = () => {
   const [rooms, setRooms] = useState([]);
@@ -14,8 +15,8 @@ export const useRoomData = () => {
       
       // ดึงข้อมูลห้องและบิลทั้งหมด
       const [roomsResponse, billsResponse] = await Promise.all([
-        fetch('https://hms-backend-zx75.onrender.com/api/rooms'),
-        fetch('https://hms-backend-zx75.onrender.com/api/bills')
+        fetch(`${API_BASE_URL}/api/rooms`),
+        fetch(`${API_BASE_URL}/api/bills`)
       ]);
 
       if (!roomsResponse.ok) {
