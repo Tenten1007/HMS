@@ -5,8 +5,9 @@ let puppeteer: any;
 // Try to import puppeteer, fallback if not available
 try {
   puppeteer = require("puppeteer");
+  console.log("Puppeteer loaded successfully");
 } catch (error) {
-  console.warn("Puppeteer not available in production environment");
+  console.error("Puppeteer import error:", error.message);
   puppeteer = null;
 }
 
