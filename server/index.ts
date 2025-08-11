@@ -2,12 +2,12 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import fs from "fs";
 import path from "path";
-import roomsRoutes from "./routes/rooms.js";
-import billsRoutes from "./routes/bills.js";
-import tenantsRoutes from "./routes/tenants.js";
-import paymentsRoutes from "./routes/payments.js";
-import lineRoutes from "./routes/line.js";
-import { generateBill } from "./generateBill.js";
+import roomsRoutes from "./routes/rooms";
+import billsRoutes from "./routes/bills";
+import tenantsRoutes from "./routes/tenants";
+import paymentsRoutes from "./routes/payments";
+import lineRoutes from "./routes/line";
+import { generateBill } from "./generateBill";
 
 const fastify = Fastify({ logger: true });
 
