@@ -22,10 +22,12 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 COPY client/package*.json ./client/
+COPY server/package*.json ./server/
 
 # Install dependencies
 RUN npm install
 RUN cd client && npm install --legacy-peer-deps
+RUN cd server && npm install
 
 # Copy source code
 COPY . .
@@ -38,7 +40,7 @@ RUN cd client && npm run build
 RUN cp -r server/templates server/dist/
 
 # Expose the port
-EXPOSE 3000
+EXPOSE 4000
 
 # Start the application
 CMD ["node", "server/dist/index.js"]
