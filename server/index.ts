@@ -7,7 +7,7 @@ import billsRoutes from "./routes/bills.js";
 import tenantsRoutes from "./routes/tenants.js";
 import paymentsRoutes from "./routes/payments.js";
 import lineRoutes from "./routes/line.js";
-// import { generateBill } from "./generateBill"; // ชั่วคราวปิดใช้
+import { generateBill } from "./generateBill.js";
 
 const fastify = Fastify({ logger: true });
 
@@ -28,11 +28,18 @@ fastify.get("/api/health", async (request, reply) => {
   return { status: "OK", message: "HMS Backend is running!" };
 });
 
-// Generate bill endpoint (ปิดชั่วคราว)
+// Generate bill endpoint
 fastify.post("/api/generate-bill", async (request, reply) => {
-  return reply.status(503).send({ 
-    error: "Bill generation temporarily disabled. Backend is working!" 
-  });
+  try {
+    const billData = request.body as any;
+    const buffer = await generateBill(billData, "pdf");
+    
+    reply.type('application/pdf');
+    reply.header('Content-Disposition', `attachment; filename="bill_${billData.roomId || 'unknown'}_${billData.month}_${billData.year}.pdf"`);
+    return buffer;
+  } catch (error: any) {
+    return reply.status(500).send({ error: error.message });
+  }
 });
 
 const PORT = Number(process.env.PORT) || 4000;
