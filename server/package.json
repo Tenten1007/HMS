@@ -21,7 +21,13 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
-    "puppeteer": "^24.12.1"
+    "fastify": "^4.26.2",
+    "@fastify/cors": "^9.0.1",
+    "puppeteer": "^22.15.0",
+    "promptpay-qr": "^0.5.0",
+    "qrcode": "^1.5.4",
+    "pg": "^8.16.3",
+    "@types/pg": "^8.15.4"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",

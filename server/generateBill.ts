@@ -1,14 +1,19 @@
 import fs from "fs";
 import path from "path";
-let puppeteer: any;
 
-// Try to import puppeteer, fallback if not available
-try {
-  puppeteer = require("puppeteer");
-  console.log("Puppeteer loaded successfully");
-} catch (error) {
-  console.error("Puppeteer import error:", error instanceof Error ? error.message : String(error));
-  puppeteer = null;
+let puppeteer: any = null;
+
+// Initialize dependencies
+async function initializeDependencies() {
+  if (puppeteer) return; // Already initialized
+  
+  try {
+    puppeteer = (await import("puppeteer")).default;
+    console.log("Puppeteer loaded successfully");
+  } catch (error) {
+    console.error("Puppeteer import error:", error instanceof Error ? error.message : String(error));
+    throw new Error("Puppeteer is required for bill generation but is not available");
+  }
 }
 
 function formatMoney(num: number | string) {
@@ -20,10 +25,8 @@ function getField(obj: any, camel: string, snake: string) {
 }
 
 export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
-  // Check if puppeteer is available
-  if (!puppeteer) {
-    throw new Error("Bill generation is not available in this environment. Puppeteer dependency missing.");
-  }
+  // Initialize dependencies
+  await initializeDependencies();
   // คำนวณค่าน้ำและค่าไฟ
   const waterCost = Number(getField(bill, "waterUsed", "water_used")) * Number(getField(bill, "waterRate", "water_rate"));
   const electricCost = Number(getField(bill, "electricUsed", "electric_used")) * Number(getField(bill, "electricRate", "electric_rate"));
@@ -49,8 +52,8 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   }
   let qrBase64 = "";
   try {
-    const promptpay = require('promptpay-qr');
-    const QRCode = require('qrcode');
+    const promptpay = (await import("promptpay-qr")).default;
+    const QRCode = (await import("qrcode")).default;
     const payload = promptpay(promptpayNumber, { amount });
     qrBase64 = await QRCode.toDataURL(payload, { margin: 1, width: 160 });
   } catch (e) {
