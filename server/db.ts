@@ -3,6 +3,9 @@ import "dotenv/config";
 
 // ปรับ config ตาม env จริง หรือใช้ .env ในอนาคต
 const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // Fallback to individual env vars if DATABASE_URL not available
   user: process.env.PGUSER || "postgres",
   host: process.env.PGHOST || "localhost",
   database: process.env.PGDATABASE || "hms",
