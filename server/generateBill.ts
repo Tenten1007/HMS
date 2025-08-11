@@ -132,16 +132,6 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
         protocolTimeout: 30000,
         args: [
           '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-extensions'
-        ],
-        args: [
-          '--no-sandbox',
           '--disable-setuid-sandbox', 
           '--disable-dev-shm-usage',
           '--disable-extensions',
