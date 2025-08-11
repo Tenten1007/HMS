@@ -19,7 +19,10 @@
       "Bash(curl:*)",
       "WebFetch(domain:hms-pied-mu.vercel.app)",
       "Bash(sqlite3:*)",
-      "WebFetch(domain:hms-z063.onrender.com)"
+      "WebFetch(domain:hms-z063.onrender.com)",
+      "Bash(npm start)",
+      "Bash(npm run build:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": []
   }

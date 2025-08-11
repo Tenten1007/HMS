@@ -5,12 +5,6 @@ import "dotenv/config";
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
-  // Fallback to individual env vars if DATABASE_URL not available
-  user: process.env.PGUSER || "postgres",
-  host: process.env.PGHOST || "localhost",
-  database: process.env.PGDATABASE || "hms",
-  password: process.env.PGPASSWORD || "postgres",
-  port: Number(process.env.PGPORT) || 5432,
 });
 
 export async function query(text: string, params?: any[]): Promise<any> {
