@@ -151,7 +151,7 @@ const RoomManagement: React.FC = () => {
         })
       });
     } else if (editMode === "edit" && selectedRoom.tenant) {
-      await fetch(`http://${API_BASE_URL}/api/tenants/${selectedRoom.tenant.id}`, {
+      await fetch(`${API_BASE_URL}/api/tenants/${selectedRoom.tenant.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -200,7 +200,7 @@ const RoomManagement: React.FC = () => {
   // ลบผู้เช่า
   const handleDeleteTenant = async (room, tenant) => {
     if (!room || !tenant) return;
-    await fetch(`http://${API_BASE_URL}/api/tenants/${tenant.id}`, {
+    await fetch(`${API_BASE_URL}/api/tenants/${tenant.id}`, {
       method: "DELETE"
     });
     // ดึงข้อมูลใหม่จาก backend แล้ว setRooms/setEditMode/setSelectedRoom

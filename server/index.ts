@@ -6,6 +6,7 @@ import roomsRoutes from "./routes/rooms.js";
 import billsRoutes from "./routes/bills.js";
 import tenantsRoutes from "./routes/tenants.js";
 import paymentsRoutes from "./routes/payments.js";
+import lineRoutes from "./routes/line.js";
 // import { generateBill } from "./generateBill"; // ชั่วคราวปิดใช้
 
 const fastify = Fastify({ logger: true });
@@ -20,6 +21,7 @@ fastify.register(roomsRoutes, { prefix: "/api/rooms" });
 fastify.register(billsRoutes, { prefix: "/api/bills" });
 fastify.register(tenantsRoutes, { prefix: "/api/tenants" });
 fastify.register(paymentsRoutes, { prefix: "/api/payments" });
+fastify.register(lineRoutes, { prefix: "/api" });
 
 // Health check endpoint
 fastify.get("/api/health", async (request, reply) => {

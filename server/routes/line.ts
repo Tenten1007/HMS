@@ -1,29 +1,40 @@
-import express from "express";
-import fetch from "node-fetch";
+import { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { query } from "../db.js";
-import { generateBill } from "../generateBill.js";
-import { uploadToStorage } from "../lib/uploadToStorage.js";
+// import { generateBill } from "../generateBill.js";
+// import { uploadToStorage } from "../lib/uploadToStorage.js";
 
-const router = express.Router();
+const lineRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
 const CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 const GROUP_ID = process.env.LINE_GROUP_ID;
 const BUCKET_FOLDER = "bills"; // Optional: prefix folder in bucket
 
-router.post("/send-bills-to-line", async (req, res) => {
+fastify.post("/send-bills-to-line", async (request, reply) => {
   try {
-    const { month, year } = req.body;
-    if (!month || !year) return res.status(400).json({ error: "Missing month/year" });
+    const { month, year } = request.body as any;
+    if (!month || !year) {
+      return reply.status(400).send({ error: "Missing month/year" });
+    }
+    
     // ดึงบิลเดือน/ปีที่เลือก
     const billsResult = await query(
       `SELECT b.*, r.name as room_name FROM bills b LEFT JOIN rooms r ON b.room_id = r.id WHERE b.year = $1 AND b.month = $2`,
       [year, month]
     );
     const bills = billsResult.rows;
+    
     // Filter เฉพาะบิลที่ยังไม่จ่ายหรือจ่ายบางส่วน
     const targetBills = bills.filter((bill: any) => bill.status === "unpaid" || bill.status === "partial");
-    if (!targetBills.length) return res.status(404).json({ error: "ไม่พบข้อมูลบิลที่ยังไม่จ่ายหรือจ่ายบางส่วนในเดือน/ปีนี้" });
+    if (!targetBills.length) {
+      return reply.status(404).send({ error: "ไม่พบข้อมูลบิลที่ยังไม่จ่ายหรือจ่ายบางส่วนในเดือน/ปีนี้" });
+    }
 
+    // Temporarily disabled due to missing generateBill and uploadToStorage
+    return reply.status(503).send({ 
+      error: "Line notification temporarily disabled. Found " + targetBills.length + " bills to send." 
+    });
+
+    /*
     for (const bill of targetBills) {
       // 1. generateBill PNG (ขาว-ดำ, viewport อัตโนมัติ)
       const buffer = await generateBill(bill, "png");
@@ -51,10 +62,13 @@ router.post("/send-bills-to-line", async (req, res) => {
       if (lineJson.message) throw new Error(lineJson.message);
     }
 
-    res.json({ success: true });
+    return { success: true };
+    */
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    return reply.status(500).send({ error: err.message });
   }
 });
 
-export default router; 
+};
+
+export default lineRoutes;
