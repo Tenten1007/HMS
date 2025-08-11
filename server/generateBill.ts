@@ -116,7 +116,7 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     browser = await Promise.race([
       puppeteer.launch({ 
         headless: 'new',
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        executablePath: '/usr/bin/google-chrome',
         timeout: 90000, // 90 seconds timeout
         protocolTimeout: 45000,
         args: [
