@@ -18,7 +18,8 @@
       "WebFetch(domain:hms-backend-zx75.onrender.com)",
       "Bash(curl:*)",
       "WebFetch(domain:hms-pied-mu.vercel.app)",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "WebFetch(domain:hms-z063.onrender.com)"
     ],
     "deny": []
   }
