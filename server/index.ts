@@ -13,7 +13,17 @@ const fastify = Fastify({ logger: true });
 
 // Register CORS
 fastify.register(cors, {
-  origin: true
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173', 
+    'https://hms-pi73dtshi-tenten07s-projects.vercel.app',
+    'https://hms-pied-mu.vercel.app',
+    /^https:\/\/.*\.vercel\.app$/,
+    /^https:\/\/.*-tenten07s-projects\.vercel\.app$/
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true
 });
 
 // Register routes
@@ -31,6 +41,12 @@ fastify.get("/api/health", async (request, reply) => {
 // Generate bill endpoint
 fastify.post("/api/generate-bill", async (request, reply) => {
   try {
+    // Set CORS headers explicitly
+    reply.header('Access-Control-Allow-Origin', request.headers.origin || '*');
+    reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    reply.header('Access-Control-Allow-Credentials', 'true');
+    
     const billData = request.body as any;
     const buffer = await generateBill(billData, "pdf");
     
@@ -44,6 +60,15 @@ fastify.post("/api/generate-bill", async (request, reply) => {
       details: error.message 
     });
   }
+});
+
+// Handle preflight requests for generate-bill
+fastify.options("/api/generate-bill", async (request, reply) => {
+  reply.header('Access-Control-Allow-Origin', request.headers.origin || '*');
+  reply.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  reply.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+  reply.header('Access-Control-Allow-Credentials', 'true');
+  reply.status(200).send();
 });
 
 const PORT = Number(process.env.PORT) || 4000;
