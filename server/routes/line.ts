@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { query } from "../db.js";
-// import { generateBill } from "../generateBill.js";
-// import { uploadToStorage } from "../lib/uploadToStorage.js";
+import { generateBill } from "../generateBill.js";
+import { uploadToStorage } from "../lib/uploadToStorage.js";
 
 const lineRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
@@ -29,12 +29,12 @@ fastify.post("/send-bills-to-line", async (request, reply) => {
       return reply.status(404).send({ error: "ไม่พบข้อมูลบิลที่ยังไม่จ่ายหรือจ่ายบางส่วนในเดือน/ปีนี้" });
     }
 
-    // Temporarily disabled due to missing generateBill and uploadToStorage
-    return reply.status(503).send({ 
-      error: "Line notification temporarily disabled. Found " + targetBills.length + " bills to send." 
-    });
-
-    /*
+    // Check required environment variables
+    if (!CHANNEL_ACCESS_TOKEN || !GROUP_ID) {
+      return reply.status(500).send({ 
+        error: "LINE credentials not configured. Please set LINE_CHANNEL_ACCESS_TOKEN and LINE_GROUP_ID." 
+      });
+    }
     for (const bill of targetBills) {
       // 1. generateBill PNG (ขาว-ดำ, viewport อัตโนมัติ)
       const buffer = await generateBill(bill, "png");
@@ -62,8 +62,7 @@ fastify.post("/send-bills-to-line", async (request, reply) => {
       if (lineJson.message) throw new Error(lineJson.message);
     }
 
-    return { success: true };
-    */
+    return { success: true, sent: targetBills.length };
   } catch (err: any) {
     return reply.status(500).send({ error: err.message });
   }

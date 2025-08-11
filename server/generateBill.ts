@@ -22,10 +22,17 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   // สร้าง QR Code PromptPay (ใช้ require แบบ dynamic)
   const promptpayNumber = process.env.PROMPTPAY_NUMBER || "0800000000";
   let amount = Number(bill.total);
+  let paidAmount = 0;
+  let remainingAmount = amount;
+  
   if (bill.paid_amount !== undefined && bill.paid_amount > 0 && bill.paid_amount < bill.total) {
-    amount = Number(bill.total) - Number(bill.paid_amount);
+    paidAmount = Number(bill.paid_amount);
+    amount = Number(bill.total) - paidAmount;
+    remainingAmount = amount;
   } else if (bill.paidAmount !== undefined && bill.paidAmount > 0 && bill.paidAmount < bill.total) {
-    amount = Number(bill.total) - Number(bill.paidAmount);
+    paidAmount = Number(bill.paidAmount);
+    amount = Number(bill.total) - paidAmount;
+    remainingAmount = amount;
   }
   let qrBase64 = "";
   try {
@@ -52,6 +59,8 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     .replace(/{{electricRate}}/g, String(getField(bill, "electricRate", "electric_rate")))
     .replace(/{{electricCost}}/g, formatMoney(electricCost))
     .replace(/{{total}}/g, formatMoney(getField(bill, "total", "total")))
+    .replace(/{{paidAmount}}/g, formatMoney(paidAmount))
+    .replace(/{{remainingAmount}}/g, formatMoney(remainingAmount))
     .replace(/{{promptpay_qr}}/g, qrBase64 ? `<img src='${qrBase64}' alt='PromptPay QR' style='display:block;margin:12px auto 0;width:160px;height:160px;'>` : "");
 
   // สร้างชื่อเดือน/ปี
