@@ -146,12 +146,24 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
       console.log('Continuing with default path...');
     }
     
+    // Log available memory
+    console.log('Available memory:', process.env.NODE_OPTIONS || 'not set');
+    
     browser = await Promise.race([
-      puppeteer.launch({ 
+      puppeteer.launch({
+        pipe: true, // Use pipe instead of WebSocket
+        dumpio: true, // Log browser process stdout and stderr
         headless: 'new',
         executablePath: chromiumPath,
-        timeout: 30000, // 30 seconds timeout
-        protocolTimeout: 30000,
+        timeout: 60000, // 60 seconds timeout
+        protocolTimeout: 60000,
+        ignoreHTTPSErrors: true,
+        env: {
+          ...process.env,
+          DISPLAY: ':99',
+          XVFB_WHD: '1280x720x16',
+          LANG: 'en_US.UTF-8'
+        },
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox', 
