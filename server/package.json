@@ -23,7 +23,7 @@
     "express": "^5.1.0",
     "fastify": "^4.26.2",
     "@fastify/cors": "^9.0.1",
-    "puppeteer": "^22.15.0",
+    "puppeteer-core": "^22.0.0",
     "promptpay-qr": "^0.5.0",
     "qrcode": "^1.5.4",
     "pg": "^8.16.3",

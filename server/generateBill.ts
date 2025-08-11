@@ -8,11 +8,11 @@ async function initializeDependencies() {
   if (puppeteer) return; // Already initialized
   
   try {
-    // Try to load puppeteer with fallbacks
+    // Try to load puppeteer-core with fallbacks
     try {
-      puppeteer = (await import("puppeteer")).default;
+      puppeteer = (await import("puppeteer-core")).default;
     } catch {
-      puppeteer = require("puppeteer");
+      puppeteer = require("puppeteer-core");
     }
     console.log("Puppeteer loaded successfully");
     
@@ -116,7 +116,7 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     browser = await Promise.race([
       puppeteer.launch({ 
         headless: 'new',
-        executablePath: '/usr/bin/google-chrome',
+        executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome-stable',
         timeout: 90000, // 90 seconds timeout
         protocolTimeout: 45000,
         args: [
