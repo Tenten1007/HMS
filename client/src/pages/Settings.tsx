@@ -4,7 +4,7 @@ import GlassCard from "../components/GlassCard";
 const Settings: React.FC = () => {
   const [waterRate, setWaterRate] = useState(() => Number(localStorage.getItem("waterRate")) || 18);
   const [electricRate, setElectricRate] = useState(() => Number(localStorage.getItem("electricRate")) || 10);
-  const [roomRate, setRoomRate] = useState(() => Number(localStorage.getItem("roomRate")) || 3500);
+  const [roomRate, setRoomRate] = useState(() => Number(localStorage.getItem("roomRate")) || 1500);
 
   useEffect(() => {
     localStorage.setItem("waterRate", String(waterRate));
