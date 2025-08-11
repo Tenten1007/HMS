@@ -92,16 +92,15 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
 
   html = html.replace(/{{billMonthYear}}/g, billMonthYear);
   
-  // Debug: Log the final HTML to see if data is replaced correctly
-  console.log("Bill data received:", JSON.stringify(bill, null, 2));
-  console.log("HTML after replacement (first 500 chars):", html.substring(0, 500));
+  // Log only essential info in production
+  console.log(`Generating bill for room ${getField(bill, "roomName", "room_name")} - ${billMonthYear}`);
 
   let browser = null;
   try {
     browser = await puppeteer.launch({ 
       headless: true,
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      timeout: 30000, // Reduce timeout to 30 seconds
+      timeout: 45000, // Increase timeout for production
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -109,13 +108,14 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
+        '--single-process', // Add back for memory efficiency on server
         '--disable-gpu',
         '--disable-web-security',
         '--disable-extensions',
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI,VizDisplayCompositor',
+        '--disable-features=TranslateUI,VizDisplayCompositor,BlinkGenPropertyTrees',
         '--disable-ipc-flooding-protection',
         '--disable-default-apps',
         '--disable-sync',
@@ -127,12 +127,19 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
         '--safebrowsing-disable-auto-update',
         '--disable-background-networking',
         '--memory-pressure-off',
-        '--max_old_space_size=4096'
+        '--max_old_space_size=2048', // Reduce memory usage
+        '--disable-logging',
+        '--disable-gl-drawing-for-tests'
       ]
     });
     
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 10000 });
+    
+    // Set page memory limits
+    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36');
+    await page.setViewport({ width: 360, height: 600, deviceScaleFactor: 1 });
+    
+    await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 15000 });
     
     // คำนวณขนาด viewport อัตโนมัติจากขนาดเนื้อหา
     const billWidth = 360; // ต้องตรงกับ .bill ใน template

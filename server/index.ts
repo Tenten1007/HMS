@@ -17,6 +17,7 @@ fastify.register(cors, {
     'http://localhost:3000',
     'http://localhost:5173', 
     'https://hms-pi73dtshi-tenten07s-projects.vercel.app',
+    'https://hms-lnqliee8t-tenten07s-projects.vercel.app',
     'https://hms-pied-mu.vercel.app',
     /^https:\/\/.*\.vercel\.app$/,
     /^https:\/\/.*-tenten07s-projects\.vercel\.app$/
