@@ -92,6 +92,7 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   const browser = await puppeteer.launch({ 
     headless: "new",
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    timeout: 60000, // Increase timeout to 60 seconds
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -99,6 +100,7 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
       '--disable-accelerated-2d-canvas',
       '--no-first-run',
       '--no-zygote',
+      '--single-process', // Run in single process to reduce startup time
       '--disable-gpu',
       '--disable-web-security',
       '--disable-extensions',
@@ -115,7 +117,9 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
       '--mute-audio',
       '--no-default-browser-check',
       '--safebrowsing-disable-auto-update',
-      '--disable-background-networking'
+      '--disable-background-networking',
+      '--memory-pressure-off',
+      '--max_old_space_size=4096'
     ]
   });
   const page = await browser.newPage();
