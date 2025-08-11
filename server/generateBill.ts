@@ -8,11 +8,26 @@ async function initializeDependencies() {
   if (puppeteer) return; // Already initialized
   
   try {
-    puppeteer = (await import("puppeteer")).default;
+    // Try to load puppeteer with fallbacks
+    try {
+      puppeteer = (await import("puppeteer")).default;
+    } catch {
+      puppeteer = require("puppeteer");
+    }
     console.log("Puppeteer loaded successfully");
+    
+    // Test if we can actually launch browser
+    const testBrowser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      timeout: 5000
+    });
+    await testBrowser.close();
+    console.log("Browser test successful");
+    
   } catch (error) {
-    console.error("Puppeteer import error:", error instanceof Error ? error.message : String(error));
-    throw new Error("Puppeteer is required for bill generation but is not available");
+    console.error("Puppeteer initialization failed:", error instanceof Error ? error.message : String(error));
+    throw new Error("PDF generation service is temporarily unavailable. Please try again later.");
   }
 }
 
@@ -207,9 +222,36 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     }
     
     return buffer;
+  } catch (error) {
+    console.error('Bill generation failed:', error);
+    
+    // More specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('timeout')) {
+        throw new Error('Request timeout - server is busy. Please try again in a few minutes.');
+      } else if (error.message.includes('Target closed') || error.message.includes('Protocol error')) {
+        throw new Error('Browser service unavailable. Please try again later.');
+      } else if (error.message.includes('Navigation timeout')) {
+        throw new Error('Content loading timeout. Please try again.');
+      }
+    }
+    
+    throw new Error('Bill generation failed. Please try again later.');
   } finally {
     if (browser) {
-      await browser.close();
+      try {
+        const pages = await browser.pages();
+        await Promise.all(pages.map(page => page.close()));
+        await browser.close();
+        console.log('Browser cleanup completed');
+      } catch (cleanupError) {
+        console.error('Browser cleanup failed:', cleanupError);
+        try {
+          await browser.disconnect();
+        } catch (disconnectError) {
+          console.error('Browser disconnect failed:', disconnectError);
+        }
+      }
     }
   }
 } 
