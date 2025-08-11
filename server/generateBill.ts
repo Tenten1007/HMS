@@ -151,61 +151,32 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     
     browser = await Promise.race([
       puppeteer.launch({
-        pipe: true, // Use pipe instead of WebSocket
+        pipe: false, // Don't use pipe in Alpine
         dumpio: true, // Log browser process stdout and stderr
         headless: 'new',
         executablePath: chromiumPath,
         args: [
+          '--headless',
+          '--disable-gpu',
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--no-first-run',
+          '--disable-software-rasterizer',
           '--no-zygote',
           '--single-process',
           '--disable-extensions',
-          '--disable-dbus',
           '--window-size=1280,720',
-          '--disable-default-apps',
-          '--disable-sync',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor,TranslateUI',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-          '--disable-background-timer-throttling',
-          '--disable-background-networking',
-          '--disable-client-side-phishing-detection',
-          '--disable-hang-monitor',
-          '--disable-ipc-flooding-protection',
-          '--disable-popup-blocking',
-          '--disable-translate',
-          '--no-default-browser-check',
-          '--disable-crash-reporter',
-          '--disable-in-process-stack-traces',
-          '--disable-logging',
-          '--disable-system-font-check',
-          '--autoplay-policy=user-gesture-required',
-          '--disable-domain-reliability',
-          '--disable-print-preview',
-          '--disable-speech-api',
-          '--hide-scrollbars',
-          '--mute-audio',
-          '--no-pings',
-          '--use-gl=swiftshader',
-          '--disable-canvas-aa',
-          '--disable-2d-canvas-clip-aa',
+          '--disable-accelerated-2d-canvas',
           '--disable-gl-drawing-for-tests',
-          '--enable-low-end-device-mode'
+          '--disable-web-security',
+          '--font-render-hinting=none'
         ],
-        timeout: 30000, // 30 seconds timeout
-        protocolTimeout: 30000,
+        timeout: 20000, // 20 seconds timeout
+        protocolTimeout: 20000,
         ignoreHTTPSErrors: true,
-        env: {
-          ...process.env,
-          DISPLAY: ':99',
-          XVFB_WHD: '1280x720x16',
-          LANG: 'en_US.UTF-8'
-        }
+        handleSIGINT: false,
+        handleSIGTERM: false,
+        handleSIGHUP: false
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 50000)) // 50 seconds
     ]);
