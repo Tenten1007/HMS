@@ -1,10 +1,10 @@
-import express from "express";
+import { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { query } from "../db.js";
 
-const router = express.Router();
+const roomsRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
 // GET /api/rooms
-router.get("/", async (req, res) => {
+fastify.get("/", async (request, reply) => {
   try {
     const roomsResult = await query(`
       SELECT r.id, r.name
@@ -37,52 +37,54 @@ router.get("/", async (req, res) => {
         }))
       };
     });
-    res.json(rooms);
+    return rooms;
   } catch (err) {
-    res.status(500).json({ error: "ไม่สามารถดึงข้อมูลห้องพักได้" });
+    return reply.status(500).send({ error: "ไม่สามารถดึงข้อมูลห้องพักได้" });
   }
 });
 
 // POST /api/rooms
-router.post("/", async (req, res) => {
-  const { ชื่อ } = req.body;
+fastify.post("/", async (request, reply) => {
+  const { ชื่อ } = request.body as any;
   try {
     const result = await query(
       "INSERT INTO rooms (name) VALUES ($1) RETURNING *",
       [ชื่อ]
     );
-    res.status(201).json({ id: result.rows[0].id, name: result.rows[0].name, status: "ว่าง" });
+    return reply.status(201).send({ id: result.rows[0].id, name: result.rows[0].name, status: "ว่าง" });
   } catch (err) {
-    res.status(500).json({ error: "ไม่สามารถเพิ่มห้องพักได้" });
+    return reply.status(500).send({ error: "ไม่สามารถเพิ่มห้องพักได้" });
   }
 });
 
 // PUT /api/rooms/:id
-router.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { ชื่อ } = req.body;
+fastify.put("/:id", async (request, reply) => {
+  const { id } = request.params as any;
+  const { ชื่อ } = request.body as any;
   try {
     const result = await query(
       "UPDATE rooms SET name=$1 WHERE id=$2 RETURNING *",
       [ชื่อ, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: "ไม่พบห้องพัก" });
-    res.json({ id: result.rows[0].id, name: result.rows[0].name });
+    if (result.rows.length === 0) return reply.status(404).send({ error: "ไม่พบห้องพัก" });
+    return { id: result.rows[0].id, name: result.rows[0].name };
   } catch (err) {
-    res.status(500).json({ error: "ไม่สามารถแก้ไขห้องพักได้" });
+    return reply.status(500).send({ error: "ไม่สามารถแก้ไขห้องพักได้" });
   }
 });
 
 // DELETE /api/rooms/:id
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
+fastify.delete("/:id", async (request, reply) => {
+  const { id } = request.params as any;
   try {
     const result = await query("DELETE FROM rooms WHERE id=$1 RETURNING *", [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "ไม่พบห้องพัก" });
-    res.json({ id: result.rows[0].id, name: result.rows[0].name });
+    if (result.rows.length === 0) return reply.status(404).send({ error: "ไม่พบห้องพัก" });
+    return { id: result.rows[0].id, name: result.rows[0].name };
   } catch (err) {
-    res.status(500).json({ error: "ไม่สามารถลบห้องพักได้" });
+    return reply.status(500).send({ error: "ไม่สามารถลบห้องพักได้" });
   }
 });
 
-export default router; 
+};
+
+export default roomsRoutes;
