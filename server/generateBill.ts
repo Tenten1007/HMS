@@ -16,11 +16,41 @@ async function initializeDependencies() {
     }
     console.log("Puppeteer loaded successfully");
     
-    // Test if we can actually launch browser
+    // Test if we can actually launch browser with production settings
     const testBrowser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      timeout: 5000
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      timeout: 60000, // Increase timeout for Docker environment
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox', 
+        '--disable-dev-shm-usage',
+        '--disable-extensions',
+        '--no-first-run',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--disable-background-networking',
+        '--disable-background-timer-throttling',
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-client-side-phishing-detection',
+        '--disable-features=TranslateUI',
+        '--disable-hang-monitor',
+        '--disable-ipc-flooding-protection',
+        '--disable-popup-blocking',
+        '--disable-prompt-on-repost',
+        '--disable-web-security',
+        '--enable-automation',
+        '--enable-logging',
+        '--force-color-profile=srgb',
+        '--metrics-recording-only',
+        '--no-default-browser-check',
+        '--password-store=basic',
+        '--use-mock-keychain',
+        '--single-process',
+        '--disable-gpu'
+      ]
     });
     await testBrowser.close();
     console.log("Browser test successful");
@@ -42,11 +72,11 @@ function getField(obj: any, camel: string, snake: string) {
 export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   console.log(`Starting bill generation for room: ${bill.roomName}`);
   
-  // Initialize dependencies with timeout
+  // Initialize dependencies with longer timeout for production
   try {
     await Promise.race([
       initializeDependencies(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Dependency initialization timeout')), 10000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Dependency initialization timeout')), 120000)) // 2 minutes for Docker
     ]);
   } catch (error) {
     console.error('Failed to initialize dependencies:', error);
@@ -127,8 +157,8 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
       puppeteer.launch({ 
         headless: true,
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-        timeout: 30000,
-        protocolTimeout: 30000,
+        timeout: 120000, // Increase timeout for Docker
+        protocolTimeout: 120000,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox', 
@@ -143,33 +173,30 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
           '--disable-renderer-backgrounding',
           '--disable-backgrounding-occluded-windows',
           '--disable-client-side-phishing-detection',
-          '--disable-default-apps',
           '--disable-features=TranslateUI',
           '--disable-hang-monitor',
           '--disable-ipc-flooding-protection',
           '--disable-popup-blocking',
           '--disable-prompt-on-repost',
-          '--disable-sync',
           '--disable-web-security',
           '--enable-automation',
           '--enable-logging',
           '--force-color-profile=srgb',
           '--metrics-recording-only',
           '--no-default-browser-check',
-          '--no-first-run',
           '--password-store=basic',
           '--use-mock-keychain',
           '--single-process',
           '--disable-gpu'
         ]
       }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 30000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 120000)) // 2 minutes
     ]);
     console.log('Browser launched successfully');
     
     const page = await Promise.race([
       browser.newPage(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('New page timeout')), 10000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('New page timeout')), 30000)) // Increase timeout
     ]);
     console.log('New page created');
     
@@ -181,8 +208,8 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     
     // Set content with timeout
     await Promise.race([
-      page.setContent(html, { waitUntil: "domcontentloaded", timeout: 10000 }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Set content timeout')), 12000))
+      page.setContent(html, { waitUntil: "domcontentloaded", timeout: 30000 }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Set content timeout')), 35000))
     ]);
     console.log('Content set successfully');
     
@@ -201,9 +228,9 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
           height: `${billHeight}px`,
           printBackground: true,
           margin: { top: 0, right: 0, bottom: 0, left: 0 },
-          timeout: 15000
+          timeout: 60000 // Increase PDF timeout
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('PDF generation timeout')), 20000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('PDF generation timeout')), 65000))
       ]);
       buffer = Buffer.from(pdfUint8);
       console.log('PDF generated successfully');
@@ -213,9 +240,9 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
         page.screenshot({ 
           type: "png", 
           clip: { x: 0, y: 0, width: billWidth, height: billHeight },
-          timeout: 15000
+          timeout: 60000 // Increase PNG timeout
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('PNG generation timeout')), 20000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('PNG generation timeout')), 65000))
       ]);
       buffer = Buffer.from(pngUint8);
       console.log('PNG generated successfully');
