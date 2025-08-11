@@ -6,6 +6,8 @@ const roomsRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 // GET /api/rooms
 fastify.get("/", async (request, reply) => {
   try {
+    console.log("Rooms API called");
+    console.log("DB connection test - starting query...");
     const roomsResult = await query(`
       SELECT r.id, r.name
       FROM rooms r
@@ -37,9 +39,11 @@ fastify.get("/", async (request, reply) => {
         }))
       };
     });
+    console.log("Rooms data retrieved successfully:", rooms.length, "rooms");
     return rooms;
   } catch (err) {
-    return reply.status(500).send({ error: "ไม่สามารถดึงข้อมูลห้องพักได้" });
+    console.error("Error in rooms API:", err);
+    return reply.status(500).send({ error: "ไม่สามารถดึงข้อมูลห้องพักได้", details: err instanceof Error ? err.message : "Unknown error" });
   }
 });
 
