@@ -25,8 +25,18 @@ function getField(obj: any, camel: string, snake: string) {
 }
 
 export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
-  // Initialize dependencies
-  await initializeDependencies();
+  console.log(`Starting bill generation for room: ${bill.roomName}`);
+  
+  // Initialize dependencies with timeout
+  try {
+    await Promise.race([
+      initializeDependencies(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Dependency initialization timeout')), 10000))
+    ]);
+  } catch (error) {
+    console.error('Failed to initialize dependencies:', error);
+    throw new Error('Server initialization failed. Please try again.');
+  }
   // คำนวณค่าน้ำและค่าไฟ
   const waterCost = Number(getField(bill, "waterUsed", "water_used")) * Number(getField(bill, "waterRate", "water_rate"));
   const electricCost = Number(getField(bill, "electricUsed", "electric_used")) * Number(getField(bill, "electricRate", "electric_rate"));
@@ -97,81 +107,103 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
 
   let browser = null;
   try {
-    browser = await puppeteer.launch({ 
-      headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      timeout: 45000, // Increase timeout for production
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process', // Add back for memory efficiency on server
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-extensions',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI,VizDisplayCompositor,BlinkGenPropertyTrees',
-        '--disable-ipc-flooding-protection',
-        '--disable-default-apps',
-        '--disable-sync',
-        '--disable-translate',
-        '--hide-scrollbars',
-        '--metrics-recording-only',
-        '--mute-audio',
-        '--no-default-browser-check',
-        '--safebrowsing-disable-auto-update',
-        '--disable-background-networking',
-        '--memory-pressure-off',
-        '--max_old_space_size=2048', // Reduce memory usage
-        '--disable-logging',
-        '--disable-gl-drawing-for-tests'
-      ]
-    });
+    console.log('Launching browser...');
+    browser = await Promise.race([
+      puppeteer.launch({ 
+        headless: true,
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+        timeout: 30000,
+        protocolTimeout: 30000,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox', 
+          '--disable-dev-shm-usage',
+          '--disable-extensions',
+          '--no-first-run',
+          '--disable-default-apps',
+          '--disable-sync',
+          '--disable-translate',
+          '--disable-background-networking',
+          '--disable-background-timer-throttling',
+          '--disable-renderer-backgrounding',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-client-side-phishing-detection',
+          '--disable-default-apps',
+          '--disable-features=TranslateUI',
+          '--disable-hang-monitor',
+          '--disable-ipc-flooding-protection',
+          '--disable-popup-blocking',
+          '--disable-prompt-on-repost',
+          '--disable-sync',
+          '--disable-web-security',
+          '--enable-automation',
+          '--enable-logging',
+          '--force-color-profile=srgb',
+          '--metrics-recording-only',
+          '--no-default-browser-check',
+          '--no-first-run',
+          '--password-store=basic',
+          '--use-mock-keychain',
+          '--single-process',
+          '--disable-gpu'
+        ]
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 30000))
+    ]);
+    console.log('Browser launched successfully');
     
-    const page = await browser.newPage();
+    const page = await Promise.race([
+      browser.newPage(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('New page timeout')), 10000))
+    ]);
+    console.log('New page created');
     
-    // Set page memory limits
-    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36');
-    await page.setViewport({ width: 360, height: 600, deviceScaleFactor: 1 });
+    // Set page configurations with timeout
+    await Promise.all([
+      page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'),
+      page.setViewport({ width: 360, height: 800, deviceScaleFactor: 1 })
+    ]);
     
-    await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 15000 });
+    // Set content with timeout
+    await Promise.race([
+      page.setContent(html, { waitUntil: "domcontentloaded", timeout: 10000 }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Set content timeout')), 12000))
+    ]);
+    console.log('Content set successfully');
     
-    // คำนวณขนาด viewport อัตโนมัติจากขนาดเนื้อหา
-    const billWidth = 360; // ต้องตรงกับ .bill ใน template
-    const billHeight = await page.evaluate(() => {
-      const el = document.querySelector('.bill');
-      if (!el) return 600;
-      const rect = el.getBoundingClientRect();
-      return Math.ceil(rect.bottom - rect.top); // ใช้ bounding rect เพื่อรวม footer/margin/padding
-    });
-    
-    // ตรวจสอบลิมิตความสูง PDF (puppeteer/chromium ~14400px)
-    if (billHeight > 14400) {
-      throw new Error('เนื้อหาบิลยาวเกินไป (สูงเกิน 14400px) กรุณาปรับ template หรือบีบเนื้อหาให้สั้นลง');
-    }
+    // Fixed dimensions for faster processing
+    const billWidth = 360;
+    const billHeight = 800; // Fixed height instead of dynamic calculation
     
     await page.setViewport({ width: billWidth, height: billHeight });
-    await new Promise(res => setTimeout(res, 500));
     
     let buffer: Buffer;
     if (format === "pdf") {
-      const pdfUint8 = await page.pdf({
-        width: `${billWidth}px`,
-        height: `${billHeight+100}px`,
-        printBackground: true,
-        margin: { top: 0, right: 0, bottom: 0, left: 0 },
-        pageRanges: '1',
-        preferCSSPageSize: false
-      });
+      console.log('Generating PDF...');
+      const pdfUint8 = await Promise.race([
+        page.pdf({
+          width: `${billWidth}px`,
+          height: `${billHeight}px`,
+          printBackground: true,
+          margin: { top: 0, right: 0, bottom: 0, left: 0 },
+          timeout: 15000
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('PDF generation timeout')), 20000))
+      ]);
       buffer = Buffer.from(pdfUint8);
+      console.log('PDF generated successfully');
     } else {
-      const pngUint8 = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: billWidth, height: billHeight } });
+      console.log('Generating PNG...');
+      const pngUint8 = await Promise.race([
+        page.screenshot({ 
+          type: "png", 
+          clip: { x: 0, y: 0, width: billWidth, height: billHeight },
+          timeout: 15000
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('PNG generation timeout')), 20000))
+      ]);
       buffer = Buffer.from(pngUint8);
+      console.log('PNG generated successfully');
     }
     
     return buffer;
