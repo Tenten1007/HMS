@@ -91,6 +91,10 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   const billMonthYear = getMonthYearStr(getField(bill, "billDate", "bill_date") || `${getField(bill, "year", "year")}-${String(getField(bill, "month", "month")).padStart(2, '0')}-01`);
 
   html = html.replace(/{{billMonthYear}}/g, billMonthYear);
+  
+  // Debug: Log the final HTML to see if data is replaced correctly
+  console.log("Bill data received:", JSON.stringify(bill, null, 2));
+  console.log("HTML after replacement (first 500 chars):", html.substring(0, 500));
 
   let browser = null;
   try {

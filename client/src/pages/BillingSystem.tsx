@@ -137,26 +137,56 @@ const BillingSystem: React.FC = () => {
   const handleDownloadFromBackend = async (format: "pdf" | "png") => {
     const waterUsed = Math.max(0, form.waterCurr - form.waterPrev);
     const electricUsed = Math.max(0, form.electricCurr - form.electricPrev);
+    
+    // Get bill date info
+    const billDate = new Date(form.billDate);
+    const month = billDate.getMonth() + 1;
+    const year = billDate.getFullYear();
+    
+    // Get selected room info
+    const selectedRoom = roomOptions.find(room => room.value === form.roomName);
+    
     const bill = {
-      ...form,
+      roomId: selectedRoom?.id || 1,
+      roomName: form.roomName,
+      month,
+      year,
+      roomRate: form.roomRate,
+      waterPrev: form.waterPrev,
+      waterCurr: form.waterCurr,
       waterUsed,
       waterRate,
+      electricPrev: form.electricPrev,
+      electricCurr: form.electricCurr,
       electricUsed,
       electricRate,
       total: waterUsed * waterRate + electricUsed * electricRate + form.roomRate,
+      billDate: form.billDate
     };
-    const res = await fetch(`${API_BASE_URL}/api/generate-bill`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bill, format }),
-    });
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = format === "pdf" ? "bill.pdf" : "bill.png";
-    a.click();
-    window.URL.revokeObjectURL(url);
+
+    try {
+      console.log("Sending bill data:", bill);
+      const res = await fetch(`${API_BASE_URL}/api/generate-bill`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bill),
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Failed to generate bill: ${res.status}`);
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = format === "pdf" ? "bill.pdf" : "bill.png";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error generating bill:", error);
+      alert("เกิดข้อผิดพลาดในการสร้างบิล");
+    }
   };
 
   const waterUsed = Math.max(0, form.waterCurr - form.waterPrev);

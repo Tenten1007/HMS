@@ -183,7 +183,10 @@ const BillStatus: React.FC = () => {
     const waterUsed = Math.max(0, previewBill.waterCurr - previewBill.waterPrev);
     const electricUsed = Math.max(0, previewBill.electricCurr - previewBill.electricPrev);
     const bill = {
+      roomId: previewBill.roomId,
       roomName: previewBill.roomName || `ห้อง ${previewBill.roomId}`,
+      month: previewBill.month,
+      year: previewBill.year,
       roomRate: previewBill.roomRate,
       waterPrev: previewBill.waterPrev,
       waterCurr: previewBill.waterCurr,
@@ -194,14 +197,16 @@ const BillStatus: React.FC = () => {
       electricUsed,
       electricRate: previewBill.electricRate,
       total: previewBill.total,
+      paidAmount: previewBill.paidAmount || 0,
       billDate: `${previewBill.year}-${String(previewBill.month).padStart(2, '0')}-01`,
     };
 
     try {
+      console.log("Generating bill for:", bill);
       const res = await fetch(`${API_BASE_URL}/api/generate-bill`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bill, format }),
+        body: JSON.stringify(bill),
       });
       
       if (res.ok) {
