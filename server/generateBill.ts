@@ -115,52 +115,82 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     console.log('Launching browser...');
     console.log('Chromium path:', process.env.CHROME_BIN || '/usr/bin/chromium');
     
-    // Check if Chromium exists
+    // Check if Chromium exists and find the correct path
+    let chromiumPath = process.env.CHROME_BIN || '/usr/bin/chromium';
     try {
       const { execSync } = require('child_process');
-      const chromeVersion = execSync('chromium --version').toString();
-      console.log('Chromium version:', chromeVersion);
+      const fs = require('fs');
+      
+      // Try different common paths
+      const possiblePaths = [
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser', 
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable',
+        '/opt/google/chrome/chrome',
+        '/snap/bin/chromium'
+      ];
+      
+      for (const path of possiblePaths) {
+        if (fs.existsSync(path)) {
+          chromiumPath = path;
+          console.log(`Found Chromium at: ${path}`);
+          break;
+        }
+      }
+      
+      const chromeVersion = execSync(`${chromiumPath} --version`, { timeout: 5000 }).toString();
+      console.log('Chromium version:', chromeVersion.trim());
     } catch (error) {
-      console.error('Error checking Chromium version:', error);
+      console.error('Error checking Chromium:', error);
+      console.log('Continuing with default path...');
     }
     
     browser = await Promise.race([
       puppeteer.launch({ 
         headless: 'new',
-        executablePath: process.env.CHROME_BIN || '/usr/bin/chromium',
+        executablePath: chromiumPath,
         timeout: 30000, // 30 seconds timeout
         protocolTimeout: 30000,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox', 
           '--disable-dev-shm-usage',
+          '--disable-gpu',
           '--disable-extensions',
           '--no-first-run',
           '--disable-default-apps',
           '--disable-sync',
-          '--disable-translate',
-          '--disable-background-networking',
-          '--disable-background-timer-throttling',
-          '--disable-renderer-backgrounding',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor,TranslateUI',
           '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--disable-background-timer-throttling',
+          '--disable-background-networking',
           '--disable-client-side-phishing-detection',
-          '--disable-features=TranslateUI',
           '--disable-hang-monitor',
           '--disable-ipc-flooding-protection',
           '--disable-popup-blocking',
-          '--disable-prompt-on-repost',
-          '--disable-web-security',
-          '--enable-automation',
-          '--enable-logging',
-          '--force-color-profile=srgb',
-          '--metrics-recording-only',
-          '--no-default-browser-check',
-          '--password-store=basic',
-          '--use-mock-keychain',
+          '--disable-translate',
           '--single-process',
-          '--disable-gpu',
-          '--memory-pressure-off',
-          '--max_old_space_size=4096'
+          '--no-zygote',
+          '--no-default-browser-check',
+          '--disable-crash-reporter',
+          '--disable-in-process-stack-traces',
+          '--disable-logging',
+          '--disable-system-font-check',
+          '--autoplay-policy=user-gesture-required',
+          '--disable-domain-reliability',
+          '--disable-print-preview',
+          '--disable-speech-api',
+          '--hide-scrollbars',
+          '--mute-audio',
+          '--no-pings',
+          '--use-gl=swiftshader',
+          '--disable-canvas-aa',
+          '--disable-2d-canvas-clip-aa',
+          '--disable-gl-drawing-for-tests',
+          '--enable-low-end-device-mode'
         ]
       }),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 50000)) // 50 seconds
