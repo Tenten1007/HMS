@@ -16,44 +16,7 @@ async function initializeDependencies() {
     }
     console.log("Puppeteer loaded successfully");
     
-    // Test if we can actually launch browser with production settings
-    const testBrowser = await puppeteer.launch({
-      headless: true,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-      timeout: 60000, // Increase timeout for Docker environment
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox', 
-        '--disable-dev-shm-usage',
-        '--disable-extensions',
-        '--no-first-run',
-        '--disable-default-apps',
-        '--disable-sync',
-        '--disable-translate',
-        '--disable-background-networking',
-        '--disable-background-timer-throttling',
-        '--disable-renderer-backgrounding',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-client-side-phishing-detection',
-        '--disable-features=TranslateUI',
-        '--disable-hang-monitor',
-        '--disable-ipc-flooding-protection',
-        '--disable-popup-blocking',
-        '--disable-prompt-on-repost',
-        '--disable-web-security',
-        '--enable-automation',
-        '--enable-logging',
-        '--force-color-profile=srgb',
-        '--metrics-recording-only',
-        '--no-default-browser-check',
-        '--password-store=basic',
-        '--use-mock-keychain',
-        '--single-process',
-        '--disable-gpu'
-      ]
-    });
-    await testBrowser.close();
-    console.log("Browser test successful");
+    console.log("Puppeteer initialization completed - skipping browser test");
     
   } catch (error) {
     console.error("Puppeteer initialization failed:", error instanceof Error ? error.message : String(error));
@@ -72,12 +35,9 @@ function getField(obj: any, camel: string, snake: string) {
 export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   console.log(`Starting bill generation for room: ${bill.roomName}`);
   
-  // Initialize dependencies with longer timeout for production
+  // Initialize dependencies quickly without browser testing
   try {
-    await Promise.race([
-      initializeDependencies(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Dependency initialization timeout')), 120000)) // 2 minutes for Docker
-    ]);
+    await initializeDependencies();
   } catch (error) {
     console.error('Failed to initialize dependencies:', error);
     throw new Error('Server initialization failed. Please try again.');
@@ -157,8 +117,8 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
       puppeteer.launch({ 
         headless: true,
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-        timeout: 120000, // Increase timeout for Docker
-        protocolTimeout: 120000,
+        timeout: 45000, // 45 seconds timeout
+        protocolTimeout: 45000,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox', 
@@ -187,10 +147,12 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
           '--password-store=basic',
           '--use-mock-keychain',
           '--single-process',
-          '--disable-gpu'
+          '--disable-gpu',
+          '--memory-pressure-off',
+          '--max_old_space_size=4096'
         ]
       }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 120000)) // 2 minutes
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Browser launch timeout')), 50000)) // 50 seconds
     ]);
     console.log('Browser launched successfully');
     
