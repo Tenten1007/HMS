@@ -92,71 +92,81 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
 
   html = html.replace(/{{billMonthYear}}/g, billMonthYear);
 
-  const browser = await puppeteer.launch({ 
-    headless: "new",
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-    timeout: 60000, // Increase timeout to 60 seconds
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process', // Run in single process to reduce startup time
-      '--disable-gpu',
-      '--disable-web-security',
-      '--disable-extensions',
-      '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--disable-renderer-backgrounding',
-      '--disable-features=TranslateUI,VizDisplayCompositor',
-      '--disable-ipc-flooding-protection',
-      '--disable-default-apps',
-      '--disable-sync',
-      '--disable-translate',
-      '--hide-scrollbars',
-      '--metrics-recording-only',
-      '--mute-audio',
-      '--no-default-browser-check',
-      '--safebrowsing-disable-auto-update',
-      '--disable-background-networking',
-      '--memory-pressure-off',
-      '--max_old_space_size=4096'
-    ]
-  });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: "networkidle0" });
-  // คำนวณขนาด viewport อัตโนมัติจากขนาดเนื้อหา
-  const billWidth = 360; // ต้องตรงกับ .bill ใน template
-  const billHeight = await page.evaluate(() => {
-    const el = document.querySelector('.bill');
-    if (!el) return 600;
-    const rect = el.getBoundingClientRect();
-    return Math.ceil(rect.bottom - rect.top); // ใช้ bounding rect เพื่อรวม footer/margin/padding
-  });
-  // ตรวจสอบลิมิตความสูง PDF (puppeteer/chromium ~14400px)
-  if (billHeight > 14400) {
-    await browser.close();
-    throw new Error('เนื้อหาบิลยาวเกินไป (สูงเกิน 14400px) กรุณาปรับ template หรือบีบเนื้อหาให้สั้นลง');
-  }
-  await page.setViewport({ width: billWidth, height: billHeight });
-  await new Promise(res => setTimeout(res, 500));
-  let buffer: Buffer;
-  if (format === "pdf") {
-    const pdfUint8 = await page.pdf({
-      width: `${billWidth}px`,
-      height: `${billHeight+100}px`,
-      printBackground: true,
-      margin: { top: 0, right: 0, bottom: 0, left: 0 },
-      pageRanges: '1',
-      preferCSSPageSize: false
+  let browser = null;
+  try {
+    browser = await puppeteer.launch({ 
+      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      timeout: 30000, // Reduce timeout to 30 seconds
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-extensions',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI,VizDisplayCompositor',
+        '--disable-ipc-flooding-protection',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--metrics-recording-only',
+        '--mute-audio',
+        '--no-default-browser-check',
+        '--safebrowsing-disable-auto-update',
+        '--disable-background-networking',
+        '--memory-pressure-off',
+        '--max_old_space_size=4096'
+      ]
     });
-    buffer = Buffer.from(pdfUint8);
-  } else {
-    const pngUint8 = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: billWidth, height: billHeight } });
-    buffer = Buffer.from(pngUint8);
+    
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "domcontentloaded", timeout: 10000 });
+    
+    // คำนวณขนาด viewport อัตโนมัติจากขนาดเนื้อหา
+    const billWidth = 360; // ต้องตรงกับ .bill ใน template
+    const billHeight = await page.evaluate(() => {
+      const el = document.querySelector('.bill');
+      if (!el) return 600;
+      const rect = el.getBoundingClientRect();
+      return Math.ceil(rect.bottom - rect.top); // ใช้ bounding rect เพื่อรวม footer/margin/padding
+    });
+    
+    // ตรวจสอบลิมิตความสูง PDF (puppeteer/chromium ~14400px)
+    if (billHeight > 14400) {
+      throw new Error('เนื้อหาบิลยาวเกินไป (สูงเกิน 14400px) กรุณาปรับ template หรือบีบเนื้อหาให้สั้นลง');
+    }
+    
+    await page.setViewport({ width: billWidth, height: billHeight });
+    await new Promise(res => setTimeout(res, 500));
+    
+    let buffer: Buffer;
+    if (format === "pdf") {
+      const pdfUint8 = await page.pdf({
+        width: `${billWidth}px`,
+        height: `${billHeight+100}px`,
+        printBackground: true,
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+        pageRanges: '1',
+        preferCSSPageSize: false
+      });
+      buffer = Buffer.from(pdfUint8);
+    } else {
+      const pngUint8 = await page.screenshot({ type: "png", clip: { x: 0, y: 0, width: billWidth, height: billHeight } });
+      buffer = Buffer.from(pngUint8);
+    }
+    
+    return buffer;
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
-  await browser.close();
-  return buffer;
 } 
