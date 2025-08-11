@@ -241,7 +241,7 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     if (browser) {
       try {
         const pages = await browser.pages();
-        await Promise.all(pages.map(page => page.close()));
+        await Promise.all(pages.map((page: any) => page.close()));
         await browser.close();
         console.log('Browser cleanup completed');
       } catch (cleanupError) {
