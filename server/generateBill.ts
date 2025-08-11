@@ -1,6 +1,14 @@
 import fs from "fs";
 import path from "path";
-import puppeteer from "puppeteer";
+let puppeteer: any;
+
+// Try to import puppeteer, fallback if not available
+try {
+  puppeteer = require("puppeteer");
+} catch (error) {
+  console.warn("Puppeteer not available in production environment");
+  puppeteer = null;
+}
 
 function formatMoney(num: number | string) {
   return Number(num).toLocaleString("en-US");
@@ -11,6 +19,10 @@ function getField(obj: any, camel: string, snake: string) {
 }
 
 export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
+  // Check if puppeteer is available
+  if (!puppeteer) {
+    throw new Error("Bill generation is not available in this environment. Puppeteer dependency missing.");
+  }
   // คำนวณค่าน้ำและค่าไฟ
   const waterCost = Number(getField(bill, "waterUsed", "water_used")) * Number(getField(bill, "waterRate", "water_rate"));
   const electricCost = Number(getField(bill, "electricUsed", "electric_used")) * Number(getField(bill, "electricRate", "electric_rate"));
@@ -85,8 +97,16 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
       '--disable-accelerated-2d-canvas',
       '--no-first-run',
       '--no-zygote',
-      '--disable-gpu'
-    ]
+      '--disable-gpu',
+      '--disable-web-security',
+      '--disable-extensions',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-features=TranslateUI',
+      '--disable-ipc-flooding-protection'
+    ],
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
   });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });

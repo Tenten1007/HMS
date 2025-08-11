@@ -38,7 +38,11 @@ fastify.post("/api/generate-bill", async (request, reply) => {
     reply.header('Content-Disposition', `attachment; filename="bill_${billData.roomId || 'unknown'}_${billData.month}_${billData.year}.pdf"`);
     return buffer;
   } catch (error: any) {
-    return reply.status(500).send({ error: error.message });
+    console.error("Bill generation error:", error.message);
+    return reply.status(503).send({ 
+      error: "Bill generation temporarily unavailable due to server configuration. Please try again later.",
+      details: error.message 
+    });
   }
 });
 

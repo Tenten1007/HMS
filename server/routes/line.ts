@@ -36,30 +36,52 @@ fastify.post("/send-bills-to-line", async (request, reply) => {
       });
     }
     for (const bill of targetBills) {
-      // 1. generateBill PNG (ขาว-ดำ, viewport อัตโนมัติ)
-      const buffer = await generateBill(bill, "png");
-      // 2. upload PNG to Google Cloud Storage
-      const fileName = `${BUCKET_FOLDER}/bill_${bill.roomId || bill.room_id}_${bill.month}_${bill.year}_${Date.now()}.png`;
-      const { directLink } = await uploadToStorage({ buffer, filename: fileName });
-      // 3. ส่งข้อความ+รูปภาพเข้าไลน์กลุ่ม
-      const message = `${bill.room_name || bill.roomId || '-'}: ${Number(bill.total).toLocaleString()} บาท\nกรุณาชำระเงินก่อนวันที่ 5 ของเดือนถัดไป`;
-      const lineBody = {
-        to: GROUP_ID,
-        messages: [
-          { type: "text", text: message },
-          { type: "image", originalContentUrl: directLink, previewImageUrl: directLink }
-        ]
-      };
-      const lineRes = await fetch("https://api.line.me/v2/bot/message/push", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${CHANNEL_ACCESS_TOKEN}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(lineBody)
-      });
-      const lineJson = await lineRes.json();
-      if (lineJson.message) throw new Error(lineJson.message);
+      try {
+        // 1. generateBill PNG (ขาว-ดำ, viewport อัตโนมัติ)
+        const buffer = await generateBill(bill, "png");
+        // 2. upload PNG to Google Cloud Storage
+        const fileName = `${BUCKET_FOLDER}/bill_${bill.roomId || bill.room_id}_${bill.month}_${bill.year}_${Date.now()}.png`;
+        const { directLink } = await uploadToStorage({ buffer, filename: fileName });
+        // 3. ส่งข้อความ+รูปภาพเข้าไลน์กลุ่ม
+        const remainingAmount = (bill.total || 0) - (bill.paid_amount || bill.paidAmount || 0);
+        const message = `${bill.room_name || bill.roomId || '-'}: ยอดคงค้าง ${Number(remainingAmount).toLocaleString()} บาท (จากยอดรวม ${Number(bill.total).toLocaleString()} บาท)\nกรุณาชำระเงินก่อนวันที่ 5 ของเดือนถัดไป`;
+        const lineBody = {
+          to: GROUP_ID,
+          messages: [
+            { type: "text", text: message },
+            { type: "image", originalContentUrl: directLink, previewImageUrl: directLink }
+          ]
+        };
+        const lineRes = await fetch("https://api.line.me/v2/bot/message/push", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${CHANNEL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(lineBody)
+        });
+        const lineJson = await lineRes.json();
+        if (lineJson.message) throw new Error(lineJson.message);
+      } catch (billError: any) {
+        // If bill generation fails, send text-only message
+        console.error(`Failed to generate bill image for ${bill.room_name}:`, billError.message);
+        const remainingAmount = (bill.total || 0) - (bill.paid_amount || bill.paidAmount || 0);
+        const message = `${bill.room_name || bill.roomId || '-'}: ยอดคงค้าง ${Number(remainingAmount).toLocaleString()} บาท (จากยอดรวม ${Number(bill.total).toLocaleString()} บาท)\nกรุณาชำระเงินก่อนวันที่ 5 ของเดือนถัดไป\n\n*รูปภาพบิลไม่พร้อมใช้งานชั่วคราว`;
+        const lineBody = {
+          to: GROUP_ID,
+          messages: [{ type: "text", text: message }]
+        };
+        const lineRes = await fetch("https://api.line.me/v2/bot/message/push", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${CHANNEL_ACCESS_TOKEN}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(lineBody)
+        });
+        const lineJson = await lineRes.json();
+        if (lineJson.message) throw new Error(lineJson.message);
+      }
     }
 
     return { success: true, sent: targetBills.length };
