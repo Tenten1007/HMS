@@ -113,12 +113,24 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   let browser = null;
   try {
     console.log('Launching browser...');
+    console.log('Chrome path:', process.env.CHROME_BIN || '/usr/bin/google-chrome-stable');
+    
+    // Check if Chrome exists
+    try {
+      const { execSync } = require('child_process');
+      const chromeVersion = execSync('google-chrome --version').toString();
+      console.log('Chrome version:', chromeVersion);
+    } catch (error) {
+      console.error('Error checking Chrome version:', error);
+    }
+    
     browser = await Promise.race([
       puppeteer.launch({ 
         headless: 'new',
         executablePath: process.env.CHROME_BIN || '/usr/bin/google-chrome-stable',
-        timeout: 90000, // 90 seconds timeout
-        protocolTimeout: 45000,
+        timeout: 30000, // 30 seconds timeout
+        protocolTimeout: 30000,
+        product: 'chrome',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox', 
