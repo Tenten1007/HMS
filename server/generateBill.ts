@@ -115,9 +115,9 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
     console.log('Launching browser...');
     browser = await Promise.race([
       puppeteer.launch({ 
-        headless: true,
+        headless: 'new',
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-        timeout: 45000, // 45 seconds timeout
+        timeout: 90000, // 90 seconds timeout
         protocolTimeout: 45000,
         args: [
           '--no-sandbox',
