@@ -34,6 +34,9 @@ COPY . .
 RUN npm run build:server
 RUN cd client && npm run build
 
+# Copy templates to the dist directory
+RUN cp -r server/templates server/dist/
+
 # Expose the port
 EXPOSE 3000
 
