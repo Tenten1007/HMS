@@ -89,7 +89,8 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
   html = html.replace(/{{billMonthYear}}/g, billMonthYear);
 
   const browser = await puppeteer.launch({ 
-    headless: true,
+    headless: "new",
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -103,10 +104,18 @@ export async function generateBill(bill: any, format: "pdf" | "png" = "pdf") {
       '--disable-background-timer-throttling',
       '--disable-backgrounding-occluded-windows',
       '--disable-renderer-backgrounding',
-      '--disable-features=TranslateUI',
-      '--disable-ipc-flooding-protection'
-    ],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+      '--disable-features=TranslateUI,VizDisplayCompositor',
+      '--disable-ipc-flooding-protection',
+      '--disable-default-apps',
+      '--disable-sync',
+      '--disable-translate',
+      '--hide-scrollbars',
+      '--metrics-recording-only',
+      '--mute-audio',
+      '--no-default-browser-check',
+      '--safebrowsing-disable-auto-update',
+      '--disable-background-networking'
+    ]
   });
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: "networkidle0" });

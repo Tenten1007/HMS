@@ -8,7 +8,8 @@
     "dev": "concurrently \"npm run dev:server\" \"cd client && npm run dev\"",
     "install:all": "npm install && cd client && npm install --legacy-peer-deps",
     "build:server": "npx tsc -p server/tsconfig.json",
-    "build": "npm run build:server && cd client && npm run build"
+    "build": "npm run build:server && cd client && npm run build",
+    "postinstall": "echo 'Dependencies installed successfully'"
   },
   "engines": {
     "node": "20.x"

@@ -13,7 +13,12 @@
       "Bash(cp:*)",
       "Bash(rm:*)",
       "Bash(npm install)",
-      "Bash(npm run build:server:*)"
+      "Bash(npm run build:server:*)",
+      "WebFetch(domain:hms-backend-zx75.onrender.com)",
+      "WebFetch(domain:hms-backend-zx75.onrender.com)",
+      "Bash(curl:*)",
+      "WebFetch(domain:hms-pied-mu.vercel.app)",
+      "Bash(sqlite3:*)"
     ],
     "deny": []
   }
