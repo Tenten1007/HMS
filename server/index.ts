@@ -3,6 +3,9 @@ import cors from "@fastify/cors";
 import fs from "fs";
 import path from "path";
 import roomsRoutes from "./routes/rooms.js";
+import billsRoutes from "./routes/bills.js";
+import tenantsRoutes from "./routes/tenants.js";
+import paymentsRoutes from "./routes/payments.js";
 // import { generateBill } from "./generateBill"; // ชั่วคราวปิดใช้
 
 const fastify = Fastify({ logger: true });
@@ -14,6 +17,9 @@ fastify.register(cors, {
 
 // Register routes
 fastify.register(roomsRoutes, { prefix: "/api/rooms" });
+fastify.register(billsRoutes, { prefix: "/api/bills" });
+fastify.register(tenantsRoutes, { prefix: "/api/tenants" });
+fastify.register(paymentsRoutes, { prefix: "/api/payments" });
 
 // Health check endpoint
 fastify.get("/api/health", async (request, reply) => {

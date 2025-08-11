@@ -1,60 +1,66 @@
-import express from "express";
+import { FastifyInstance, FastifyPluginAsync } from "fastify";
 import { query } from "../db.js";
 import { Payment, toPayment } from "../models/payment.model.js";
 
-const router = express.Router();
+const paymentsRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
 // GET /api/payments
-router.get("/", async (req, res) => {
+fastify.get("/", async (request, reply) => {
   try {
     const result = await query("SELECT * FROM payments ORDER BY id DESC");
-    res.json(result.rows.map(toPayment));
+    return result.rows.map(toPayment);
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch payments" });
+    return reply.status(500).send({ error: "Failed to fetch payments" });
   }
 });
 
 // POST /api/payments
-router.post("/", async (req, res) => {
-  const { billId, amount, method, slipUrl, note, paidAt } = req.body;
+fastify.post("/", async (request, reply) => {
+  const { billId, amount, method, slipUrl, note, paidAt } = request.body as any;
   try {
     const result = await query(
       `INSERT INTO payments (bill_id, amount, method, slip_url, note, paid_at, created_at)
        VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING *`,
       [billId, amount, method, slipUrl, note, paidAt]
     );
-    res.status(201).json(toPayment(result.rows[0]));
+    return reply.status(201).send(toPayment(result.rows[0]));
   } catch (err) {
-    res.status(500).json({ error: "Failed to create payment" });
+    return reply.status(500).send({ error: "Failed to create payment" });
   }
 });
 
 // PUT /api/payments/:id
-router.put("/:id", async (req, res) => {
-  const { id } = req.params;
-  const { note } = req.body;
+fastify.put("/:id", async (request, reply) => {
+  const { id } = request.params as any;
+  const { note } = request.body as any;
   try {
     const result = await query(
       "UPDATE payments SET note=$1 WHERE id=$2 RETURNING *",
       [note, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: "Payment not found" });
-    res.json(toPayment(result.rows[0]));
+    if (result.rows.length === 0) {
+      return reply.status(404).send({ error: "Payment not found" });
+    }
+    return toPayment(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update payment" });
+    return reply.status(500).send({ error: "Failed to update payment" });
   }
 });
 
 // DELETE /api/payments/:id
-router.delete("/:id", async (req, res) => {
-  const { id } = req.params;
+fastify.delete("/:id", async (request, reply) => {
+  const { id } = request.params as any;
   try {
     const result = await query("DELETE FROM payments WHERE id=$1 RETURNING *", [id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "Payment not found" });
-    res.json(toPayment(result.rows[0]));
+    if (result.rows.length === 0) {
+      return reply.status(404).send({ error: "Payment not found" });
+    }
+    return toPayment(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: "Failed to delete payment" });
+    return reply.status(500).send({ error: "Failed to delete payment" });
   }
 });
 
-export default router; 
+};
+
+export default paymentsRoutes;
